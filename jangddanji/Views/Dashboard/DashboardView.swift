@@ -125,7 +125,7 @@ private struct DashboardContentView: View {
         .padding(.top, 16)
         .padding(.bottom, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color.clear)
     }
 
     // MARK: - Completion card

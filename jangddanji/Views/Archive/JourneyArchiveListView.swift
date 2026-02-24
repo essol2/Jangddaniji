@@ -63,7 +63,7 @@ struct JourneyArchiveListView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.white)
+        .background(Color.clear)
     }
 
     private var emptyView: some View {

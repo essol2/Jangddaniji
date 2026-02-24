@@ -109,7 +109,7 @@ private struct RouteModifyContentView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color.clear)
     }
 
     // MARK: - Current route card

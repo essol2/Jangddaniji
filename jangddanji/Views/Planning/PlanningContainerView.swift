@@ -24,16 +24,16 @@ struct PlanningContainerView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("새로운 여정 계획")
                         .font(.appBold(size: 22))
-                        .foregroundStyle(AppColors.primaryBlueDark)
+                        .foregroundStyle(AppColors.textPrimary)
                     Text("나만의 대장정을 설계해보세요")
                         .font(.appRegular(size: 14))
-                        .foregroundStyle(AppColors.primaryBlueDark.opacity(0.7))
+                        .foregroundStyle(AppColors.textSecondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Color.white)
+            .background(Color.clear)
 
             // Step indicator
             HStack(spacing: 6) {
