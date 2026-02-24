@@ -11,7 +11,7 @@ struct DashboardView: View {
             DashboardContentView(journey: journey)
         } else {
             VStack(spacing: 20) {
-                Image(systemName: "map")
+                Image(systemName: "map") 
                     .font(.appRegular(size: 48))
                     .foregroundStyle(AppColors.primaryBlueDark)
                 Text("진행 중인 여정이 없습니다")
