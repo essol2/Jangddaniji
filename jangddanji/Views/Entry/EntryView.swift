@@ -9,7 +9,7 @@ struct EntryView: View {
     @Query(filter: #Predicate<Journey> { $0.statusRawValue == "completed" })
     private var completedJourneys: [Journey]
 
-    @State private var hasCheckedState = false
+    private var interstitialAd = InterstitialAdManager.shared
 
     var body: some View {
         ZStack {
@@ -47,7 +47,9 @@ struct EntryView: View {
                 VStack(spacing: 12) {
                     if !activeJourneys.isEmpty {
                         Button {
-                            router.navigateTo(.dashboard)
+                            interstitialAd.tryShowAd {
+                                router.navigateTo(.dashboard)
+                            }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "figure.walk.circle.fill")
@@ -113,14 +115,5 @@ struct EntryView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear {
-            guard !hasCheckedState else { return }
-            hasCheckedState = true
-            if !activeJourneys.isEmpty {
-                DispatchQueue.main.async {
-                    router.navigateTo(.dashboard)
-                }
-            }
-        }
     }
 }

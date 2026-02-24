@@ -43,6 +43,7 @@ private struct DashboardContentView: View {
     @State private var selectedDayRoute: DayRoute?
     @State private var showStopAlert = false
     @State private var showCelebration = false
+    @StateObject private var adManager = NativeAdManager()
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -82,6 +83,7 @@ private struct DashboardContentView: View {
             viewModel.updateStatuses(context: modelContext)
             pedometer.setPeriodStart(journey.startDate)
             pedometer.requestAuthorization()
+            adManager.loadAd()
         }
         .onChange(of: journey.statusRawValue) { _, newValue in
             if newValue == JourneyStatus.completed.rawValue {
@@ -481,6 +483,11 @@ private struct DashboardContentView: View {
                                 }
                             }
                         }
+                }
+
+                // Native Ad
+                if let nativeAd = adManager.nativeAd {
+                    NativeAdCardView(nativeAd: nativeAd)
                 }
             }
         }

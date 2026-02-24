@@ -9,6 +9,7 @@ struct JourneyArchiveListView: View {
     )
     private var completedJourneys: [Journey]
 
+    @StateObject private var adManager = NativeAdManager()
     @Environment(AppRouter.self) private var router
 
     var body: some View {
@@ -26,6 +27,11 @@ struct JourneyArchiveListView: View {
                                     router.navigateTo(.archiveDetail(journeyID: journey.id))
                                 }
                         }
+
+                        // Native Ad
+                        if let nativeAd = adManager.nativeAd {
+                            NativeAdCardView(nativeAd: nativeAd)
+                        }
                     }
                     .padding(16)
                 }
@@ -33,6 +39,9 @@ struct JourneyArchiveListView: View {
         }
         .background(AppColors.background)
         .navigationBarHidden(true)
+        .onAppear {
+            adManager.loadAd()
+        }
     }
 
     private var headerSection: some View {

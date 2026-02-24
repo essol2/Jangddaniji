@@ -1,8 +1,15 @@
 import SwiftUI
 import SwiftData
+import GoogleMobileAds
 
 @main
 struct jangddanjiApp: App {
+    init() {
+        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = ["829618ddb23b6e54fc796f1fba9b701f"]
+        GADMobileAds.sharedInstance().start(completionHandler: nil)
+        InterstitialAdManager.shared.loadAd()
+    }
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Journey.self,
