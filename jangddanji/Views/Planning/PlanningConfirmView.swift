@@ -11,7 +11,7 @@ struct PlanningConfirmView: View {
                         ProgressView()
                             .scaleEffect(1.2)
                         Text("경로를 계산하고 있습니다...")
-                            .font(.system(size: 15))
+                            .font(.appRegular(size: 15))
                             .foregroundStyle(AppColors.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -19,10 +19,10 @@ struct PlanningConfirmView: View {
                 } else if let error = viewModel.errorMessage {
                     VStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 40))
+                            .font(.appRegular(size: 40))
                             .foregroundStyle(.orange)
                         Text(error)
-                            .font(.system(size: 15))
+                            .font(.appRegular(size: 15))
                             .foregroundStyle(AppColors.textSecondary)
                             .multilineTextAlignment(.center)
                         Button("다시 시도") {
@@ -55,7 +55,7 @@ struct PlanningConfirmView: View {
 
                     // Day segments list
                     Text("일자별 계획")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.appBold(size: 16))
                         .padding(.top, 8)
 
                     ForEach(Array(viewModel.daySegments.enumerated()), id: \.offset) { index, segment in
@@ -65,14 +65,14 @@ struct PlanningConfirmView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Day \(segment.dayNumber)")
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(.appRegular(size: 12))
                                     .foregroundStyle(AppColors.primaryBlueDark)
                                 Text("\(names.start) → \(names.end)")
-                                    .font(.system(size: 15, weight: .medium))
+                                    .font(.appRegular(size: 15))
                             }
                             Spacer()
                             Text(DistanceFormatter.formatted(segment.distance))
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.appBold(size: 15))
                                 .foregroundStyle(AppColors.textSecondary)
                         }
                         .padding(14)
@@ -96,11 +96,11 @@ struct PlanningConfirmView: View {
     private func summaryRow(_ title: String, _ value: String) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 14))
+                .font(.appRegular(size: 14))
                 .foregroundStyle(AppColors.textSecondary)
             Spacer()
             Text(value)
-                .font(.system(size: 16, weight: .bold))
+                .font(.appBold(size: 16))
         }
     }
 }

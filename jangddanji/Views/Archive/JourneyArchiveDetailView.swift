@@ -34,7 +34,7 @@ private struct ArchiveDetailContentView: View {
                     summaryCard
 
                     Text("여정 기록")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.appBold(size: 16))
                         .foregroundStyle(AppColors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 4)
@@ -60,9 +60,9 @@ private struct ArchiveDetailContentView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.appBold(size: 14))
                     Text("뒤로")
-                        .font(.system(size: 15))
+                        .font(.appRegular(size: 15))
                 }
                 .foregroundStyle(AppColors.primaryBlueDark)
             }
@@ -71,15 +71,15 @@ private struct ArchiveDetailContentView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(journey.title)
-                        .font(.jejuDoldam(size: 24))
+                        .font(.appBold(size: 24))
                         .foregroundStyle(AppColors.textPrimary)
                     Text("\(AppDateFormatter.shortDate.string(from: journey.startDate)) ~ \(AppDateFormatter.shortDate.string(from: journey.endDate))")
-                        .font(.system(size: 13))
+                        .font(.appRegular(size: 13))
                         .foregroundStyle(AppColors.textSecondary)
                 }
                 Spacer()
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 28))
+                    .font(.appRegular(size: 28))
                     .foregroundStyle(AppColors.completedGreen)
             }
         }
@@ -114,10 +114,10 @@ private struct ArchiveDetailContentView: View {
     private func statItem(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 18, weight: .bold))
+                .font(.appBold(size: 18))
                 .foregroundStyle(AppColors.primaryBlueDark)
             Text(label)
-                .font(.system(size: 12))
+                .font(.appRegular(size: 12))
                 .foregroundStyle(AppColors.textSecondary)
         }
     }
@@ -146,28 +146,28 @@ private struct ArchiveDayCard: View {
                     // Day badge
                     VStack(spacing: 1) {
                         Text("Day")
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.appRegular(size: 9))
                             .foregroundStyle(AppColors.textSecondary)
                         Text("\(dayRoute.dayNumber)")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.appBold(size: 16))
                             .foregroundStyle(AppColors.textPrimary)
                     }
                     .frame(width: 38)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(AppDateFormatter.dayMonth.string(from: dayRoute.date))
-                            .font(.system(size: 12))
+                            .font(.appRegular(size: 12))
                             .foregroundStyle(AppColors.textSecondary)
 
                         HStack(spacing: 4) {
                             Text(dayRoute.startLocationName)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.appRegular(size: 13))
                                 .lineLimit(1)
                             Image(systemName: "arrow.right")
-                                .font(.system(size: 10))
+                                .font(.appRegular(size: 10))
                                 .foregroundStyle(AppColors.textSecondary)
                             Text(dayRoute.endLocationName)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.appRegular(size: 13))
                                 .lineLimit(1)
                         }
                         .foregroundStyle(AppColors.textPrimary)
@@ -177,18 +177,18 @@ private struct ArchiveDayCard: View {
 
                     VStack(alignment: .trailing, spacing: 4) {
                         Text(DistanceFormatter.formattedDetailed(dayRoute.distance))
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.appBold(size: 12))
                             .foregroundStyle(AppColors.textPrimary)
 
                         if hasJournal {
                             Image(systemName: "pencil.line")
-                                .font(.system(size: 12))
+                                .font(.appRegular(size: 12))
                                 .foregroundStyle(AppColors.primaryBlueDark)
                         }
                     }
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 12))
+                        .font(.appRegular(size: 12))
                         .foregroundStyle(AppColors.textSecondary.opacity(0.5))
                 }
                 .padding(14)
@@ -212,14 +212,14 @@ private struct ArchiveDayCard: View {
 
                     if !entry.text.isEmpty {
                         Text(entry.text)
-                            .font(.system(size: 14))
+                            .font(.appRegular(size: 14))
                             .foregroundStyle(AppColors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if entry.text.isEmpty && entry.photoData == nil {
                         Text("기록이 없습니다")
-                            .font(.system(size: 13))
+                            .font(.appRegular(size: 13))
                             .foregroundStyle(AppColors.textSecondary.opacity(0.6))
                     }
                 }
@@ -230,7 +230,7 @@ private struct ArchiveDayCard: View {
                     .padding(.horizontal, 14)
 
                 Text("기록이 없습니다")
-                    .font(.system(size: 13))
+                    .font(.appRegular(size: 13))
                     .foregroundStyle(AppColors.textSecondary.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 14)

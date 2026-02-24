@@ -42,9 +42,9 @@ struct JourneyArchiveListView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.appBold(size: 14))
                     Text("뒤로")
-                        .font(.system(size: 15))
+                        .font(.appRegular(size: 15))
                 }
                 .foregroundStyle(AppColors.primaryBlueDark)
             }
@@ -52,7 +52,7 @@ struct JourneyArchiveListView: View {
             Spacer()
 
             Text("발걸음 기록")
-                .font(.jejuDoldam(size: 17))
+                .font(.appBold(size: 17))
                 .foregroundStyle(AppColors.textPrimary)
 
             Spacer()
@@ -70,10 +70,10 @@ struct JourneyArchiveListView: View {
         VStack(spacing: 16) {
             Spacer()
             Image(systemName: "book.closed")
-                .font(.system(size: 48))
+                .font(.appRegular(size: 48))
                 .foregroundStyle(AppColors.primaryBlueDark.opacity(0.4))
             Text("완료된 여정이 없습니다")
-                .font(.system(size: 16))
+                .font(.appRegular(size: 16))
                 .foregroundStyle(AppColors.textSecondary)
             Spacer()
         }
@@ -91,12 +91,12 @@ private struct JourneyArchiveCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(journey.title)
-                    .font(.jejuDoldam(size: 16))
+                    .font(.appBold(size: 16))
                     .foregroundStyle(AppColors.textPrimary)
                     .lineLimit(1)
                 Spacer()
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 18))
+                    .font(.appRegular(size: 18))
                     .foregroundStyle(AppColors.completedGreen)
             }
 
@@ -105,42 +105,42 @@ private struct JourneyArchiveCard: View {
                     "\(AppDateFormatter.shortDate.string(from: journey.startDate)) ~ \(AppDateFormatter.shortDate.string(from: journey.endDate))",
                     systemImage: "calendar"
                 )
-                .font(.system(size: 12))
+                .font(.appRegular(size: 12))
                 .foregroundStyle(AppColors.textSecondary)
             }
 
             HStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("총 거리")
-                        .font(.system(size: 11))
+                        .font(.appRegular(size: 11))
                         .foregroundStyle(AppColors.textSecondary)
                     Text(DistanceFormatter.formattedDetailed(journey.totalDistance))
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.appBold(size: 15))
                         .foregroundStyle(AppColors.primaryBlueDark)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("총 일수")
-                        .font(.system(size: 11))
+                        .font(.appRegular(size: 11))
                         .foregroundStyle(AppColors.textSecondary)
                     Text("\(journey.numberOfDays)일")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.appBold(size: 15))
                         .foregroundStyle(AppColors.primaryBlueDark)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("완주 구간")
-                        .font(.system(size: 11))
+                        .font(.appRegular(size: 11))
                         .foregroundStyle(AppColors.textSecondary)
                     Text("\(totalCompleted)개")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.appBold(size: 15))
                         .foregroundStyle(AppColors.primaryBlueDark)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
+                    .font(.appRegular(size: 14))
                     .foregroundStyle(AppColors.textSecondary.opacity(0.5))
             }
         }

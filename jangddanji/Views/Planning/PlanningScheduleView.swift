@@ -10,13 +10,13 @@ struct PlanningScheduleView: View {
                     Image(systemName: "calendar")
                         .foregroundStyle(AppColors.primaryBlueDark)
                     Text("여정 기간")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.appBold(size: 18))
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("시작일")
-                            .font(.system(size: 13))
+                            .font(.appRegular(size: 13))
                             .foregroundStyle(AppColors.textSecondary)
                         DatePicker(
                             "",
@@ -32,7 +32,7 @@ struct PlanningScheduleView: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("종료일")
-                            .font(.system(size: 13))
+                            .font(.appRegular(size: 13))
                             .foregroundStyle(AppColors.textSecondary)
                         DatePicker(
                             "",
@@ -55,12 +55,12 @@ struct PlanningScheduleView: View {
                 Text("총")
                     .foregroundStyle(AppColors.textSecondary)
                 Text("\(viewModel.numberOfDays)일")
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.appBold(size: 17))
                     .foregroundStyle(AppColors.primaryBlueDark)
                 Text("간의 여정")
                     .foregroundStyle(AppColors.textSecondary)
             }
-            .font(.system(size: 15))
+            .font(.appRegular(size: 15))
 
             Spacer()
         }

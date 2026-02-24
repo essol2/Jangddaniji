@@ -12,16 +12,16 @@ struct DashboardView: View {
         } else {
             VStack(spacing: 20) {
                 Image(systemName: "map")
-                    .font(.system(size: 48))
+                    .font(.appRegular(size: 48))
                     .foregroundStyle(AppColors.primaryBlueDark)
                 Text("진행 중인 여정이 없습니다")
-                    .font(.system(size: 16))
+                    .font(.appRegular(size: 16))
                     .foregroundStyle(AppColors.textSecondary)
                 Button {
                     router.popToRoot()
                 } label: {
                     Text("처음으로")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.appBold(size: 16))
                         .foregroundStyle(.white)
                         .frame(width: 160, height: 48)
                         .background(AppColors.primaryBlueDark)
@@ -97,14 +97,14 @@ private struct DashboardContentView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("장딴지")
-                    .font(.jejuDoldam(size: 26))
+                    .font(.appBold(size: 26))
                     .foregroundStyle(AppColors.textPrimary)
                 Text(journey.title)
-                    .font(.system(size: 13))
+                    .font(.appRegular(size: 13))
                     .foregroundStyle(AppColors.textSecondary)
                     .lineLimit(1)
                 Text("\(AppDateFormatter.shortDate.string(from: journey.startDate)) ~ \(AppDateFormatter.shortDate.string(from: journey.endDate))")
-                    .font(.system(size: 12))
+                    .font(.appRegular(size: 12))
                     .foregroundStyle(AppColors.textSecondary.opacity(0.8))
             }
 
@@ -114,7 +114,7 @@ private struct DashboardContentView: View {
                 router.navigateTo(.archiveList)
             } label: {
                 Image(systemName: "book.closed.fill")
-                    .font(.system(size: 20))
+                    .font(.appRegular(size: 20))
                     .foregroundStyle(AppColors.primaryBlueDark)
                     .padding(10)
                     .background(.white.opacity(0.8))
@@ -133,10 +133,10 @@ private struct DashboardContentView: View {
         VStack(spacing: 12) {
             HStack(alignment: .bottom, spacing: 4) {
                 Text("\(viewModel.completionPercentage)%")
-                    .font(.system(size: 52, weight: .bold))
+                    .font(.appBold(size: 52))
                     .foregroundStyle(AppColors.accentYellow)
                 Text("완주")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.appBold(size: 20))
                     .foregroundStyle(AppColors.textPrimary)
                     .padding(.bottom, 8)
 
@@ -144,10 +144,10 @@ private struct DashboardContentView: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("남은 거리")
-                        .font(.system(size: 12))
+                        .font(.appRegular(size: 12))
                         .foregroundStyle(AppColors.textSecondary)
                     Text(DistanceFormatter.formattedDetailed(viewModel.remainingDistance))
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.appBold(size: 18))
                         .foregroundStyle(AppColors.textPrimary)
                 }
             }
@@ -167,31 +167,31 @@ private struct DashboardContentView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("오늘의 구간")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.appRegular(size: 12))
                         .foregroundStyle(.white.opacity(0.75))
                     Text("Day \(dayRoute.dayNumber) · \(AppDateFormatter.dayMonth.string(from: dayRoute.date))")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.appBold(size: 14))
                         .foregroundStyle(.white)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.appBold(size: 14))
                     .foregroundStyle(.white.opacity(0.6))
             }
 
             HStack(spacing: 6) {
                 Image(systemName: "circle.fill")
-                    .font(.system(size: 8))
+                    .font(.appRegular(size: 8))
                     .foregroundStyle(.white.opacity(0.7))
                 Text(dayRoute.startLocationName)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.appBold(size: 15))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 12))
+                    .font(.appRegular(size: 12))
                     .foregroundStyle(.white.opacity(0.6))
                 Text(dayRoute.endLocationName)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.appBold(size: 15))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer()
@@ -199,7 +199,7 @@ private struct DashboardContentView: View {
 
             HStack {
                 Label(DistanceFormatter.formattedDetailed(dayRoute.distance), systemImage: "figure.walk")
-                    .font(.system(size: 13))
+                    .font(.appRegular(size: 13))
                     .foregroundStyle(.white.opacity(0.8))
 
                 Spacer()
@@ -210,7 +210,7 @@ private struct DashboardContentView: View {
                         showMapAppPicker = true
                     } label: {
                         Label("길찾기", systemImage: "map.fill")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.appBold(size: 13))
                             .foregroundStyle(AppColors.primaryBlueDark)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
@@ -222,7 +222,7 @@ private struct DashboardContentView: View {
                         viewModel.markCompleted(context: modelContext)
                     } label: {
                         Label("완료", systemImage: "checkmark")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.appBold(size: 13))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
@@ -246,7 +246,7 @@ private struct DashboardContentView: View {
     private var scheduleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("전체 일정")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.appBold(size: 16))
                 .foregroundStyle(AppColors.textPrimary)
 
             VStack(spacing: 8) {

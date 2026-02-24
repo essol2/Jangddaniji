@@ -10,10 +10,10 @@ struct PlanningContainerView: View {
             // Header
             VStack(alignment: .leading, spacing: 4) {
                 Text("새로운 여정 계획")
-                    .font(.jejuDoldam(size: 22))
+                    .font(.appBold(size: 22))
                     .foregroundStyle(.white)
                 Text("나만의 대장정을 설계해보세요")
-                    .font(.system(size: 14))
+                    .font(.appRegular(size: 14))
                     .foregroundStyle(.white.opacity(0.8))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -59,7 +59,7 @@ struct PlanningContainerView: View {
                         viewModel.goBack()
                     } label: {
                         Text("이전")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.appBold(size: 16))
                             .foregroundStyle(AppColors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -74,7 +74,7 @@ struct PlanningContainerView: View {
                         startJourney()
                     } label: {
                         Text("여정 시작하기")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.appBold(size: 16))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -89,7 +89,7 @@ struct PlanningContainerView: View {
                         viewModel.goNext()
                     } label: {
                         Text("다음")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.appBold(size: 16))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -115,7 +115,7 @@ struct PlanningContainerView: View {
                         Image(systemName: "chevron.left")
                         Text("돌아가기")
                     }
-                    .font(.system(size: 15))
+                    .font(.appRegular(size: 15))
                     .foregroundStyle(AppColors.primaryBlueDark)
                 }
             }

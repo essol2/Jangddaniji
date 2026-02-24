@@ -48,7 +48,7 @@ private struct RouteModifyContentView: View {
 
                     if let error = viewModel.errorMessage {
                         Text(error)
-                            .font(.system(size: 13))
+                            .font(.appRegular(size: 13))
                             .foregroundStyle(.red)
                             .padding(12)
                             .background(Color.red.opacity(0.08))
@@ -90,20 +90,20 @@ private struct RouteModifyContentView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.appBold(size: 14))
                     Text("뒤로")
-                        .font(.system(size: 15))
+                        .font(.appRegular(size: 15))
                 }
                 .foregroundStyle(AppColors.primaryBlueDark)
             }
             .padding(.bottom, 4)
 
             Text("경로 수정")
-                .font(.jejuDoldam(size: 26))
+                .font(.appBold(size: 26))
                 .foregroundStyle(AppColors.textPrimary)
 
             Text("Day \(dayRoute.dayNumber) · \(AppDateFormatter.dayMonth.string(from: dayRoute.date))")
-                .font(.system(size: 13))
+                .font(.appRegular(size: 13))
                 .foregroundStyle(AppColors.textSecondary)
         }
         .padding(.horizontal, 20)
@@ -117,7 +117,7 @@ private struct RouteModifyContentView: View {
     private var currentRouteCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("현재 구간")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.appBold(size: 14))
                 .foregroundStyle(AppColors.textSecondary)
 
             HStack(spacing: 12) {
@@ -135,17 +135,17 @@ private struct RouteModifyContentView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text(dayRoute.startLocationName)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.appRegular(size: 15))
                         .foregroundStyle(AppColors.textPrimary)
                     Text(dayRoute.endLocationName)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.appRegular(size: 15))
                         .foregroundStyle(AppColors.textPrimary)
                 }
 
                 Spacer()
 
                 Text(DistanceFormatter.formattedDetailed(dayRoute.distance))
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.appBold(size: 14))
                     .foregroundStyle(AppColors.textSecondary)
             }
         }
@@ -160,14 +160,14 @@ private struct RouteModifyContentView: View {
     private var newEndLocationCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("오늘 도착지 변경")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.appBold(size: 14))
                 .foregroundStyle(AppColors.textSecondary)
 
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(AppColors.textSecondary)
                 TextField("도착지 검색", text: $searchQuery)
-                    .font(.system(size: 15))
+                    .font(.appRegular(size: 15))
                     .onChange(of: searchQuery) { _, newQuery in
                         searchDebounceTask?.cancel()
                         searchDebounceTask = Task {
@@ -199,10 +199,10 @@ private struct RouteModifyContentView: View {
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(result.name)
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.appRegular(size: 14))
                                     .foregroundStyle(AppColors.textPrimary)
                                 Text(result.subtitle)
-                                    .font(.system(size: 12))
+                                    .font(.appRegular(size: 12))
                                     .foregroundStyle(AppColors.textSecondary)
                                     .lineLimit(1)
                             }
@@ -225,7 +225,7 @@ private struct RouteModifyContentView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(AppColors.completedGreen)
                     Text("새 도착지: \(viewModel.newEndLocationName)")
-                        .font(.system(size: 13))
+                        .font(.appRegular(size: 13))
                         .foregroundStyle(AppColors.completedGreen)
                 }
             }
@@ -241,12 +241,12 @@ private struct RouteModifyContentView: View {
     private var remainingDaysCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("남은 일정 조정")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.appBold(size: 14))
                 .foregroundStyle(AppColors.textSecondary)
 
             HStack {
                 Text("남은 날수")
-                    .font(.system(size: 15))
+                    .font(.appRegular(size: 15))
                     .foregroundStyle(AppColors.textPrimary)
 
                 Spacer()
@@ -278,7 +278,7 @@ private struct RouteModifyContentView: View {
                     Text("경로 재계산하기")
                 }
             }
-            .font(.system(size: 17, weight: .semibold))
+            .font(.appBold(size: 17))
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 54)

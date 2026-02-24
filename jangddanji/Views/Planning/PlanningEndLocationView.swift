@@ -6,7 +6,7 @@ struct PlanningEndLocationView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("목적지")
-                .font(.system(size: 14, weight: .medium))
+                .font(.appRegular(size: 14))
                 .foregroundStyle(AppColors.textSecondary)
 
             LocationSearchBar(

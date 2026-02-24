@@ -98,31 +98,31 @@ private struct DayDetailContentView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.appBold(size: 14))
                     Text("뒤로")
-                        .font(.system(size: 15))
+                        .font(.appRegular(size: 15))
                 }
                 .foregroundStyle(AppColors.primaryBlueDark)
             }
             .padding(.bottom, 4)
 
             Text("Day \(dayRoute.dayNumber)")
-                .font(.jejuDoldam(size: 28))
+                .font(.appBold(size: 28))
                 .foregroundStyle(AppColors.textPrimary)
 
             HStack(spacing: 4) {
                 Text(dayRoute.startLocationName)
                     .lineLimit(1)
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 11))
+                    .font(.appRegular(size: 11))
                 Text(dayRoute.endLocationName)
                     .lineLimit(1)
             }
-            .font(.system(size: 14))
+            .font(.appRegular(size: 14))
             .foregroundStyle(AppColors.textSecondary)
 
             Text(AppDateFormatter.dayMonth.string(from: dayRoute.date))
-                .font(.system(size: 13))
+                .font(.appRegular(size: 13))
                 .foregroundStyle(AppColors.textSecondary.opacity(0.8))
         }
         .padding(.horizontal, 20)
@@ -147,7 +147,7 @@ private struct DayDetailContentView: View {
         HStack {
             VStack(alignment: .leading, spacing: 6) {
                 Label(DistanceFormatter.formattedDetailed(dayRoute.distance), systemImage: "figure.walk")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.appBold(size: 16))
                     .foregroundStyle(AppColors.textPrimary)
 
                 statusBadge
@@ -160,7 +160,7 @@ private struct DayDetailContentView: View {
                     showMapAppPicker = true
                 } label: {
                     Label("길찾기", systemImage: "map.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.appBold(size: 13))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
@@ -172,7 +172,7 @@ private struct DayDetailContentView: View {
                     router.navigateTo(.routeModify(dayRouteID: dayRoute.id))
                 } label: {
                     Label("경로 수정", systemImage: "pencil")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.appBold(size: 13))
                         .foregroundStyle(AppColors.textSecondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
@@ -198,7 +198,7 @@ private struct DayDetailContentView: View {
         }()
 
         return Text(text)
-            .font(.system(size: 12, weight: .semibold))
+            .font(.appBold(size: 12))
             .foregroundStyle(color)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -211,7 +211,7 @@ private struct DayDetailContentView: View {
     private var journalPhotoSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("오늘의 사진")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.appBold(size: 15))
                 .foregroundStyle(AppColors.textPrimary)
 
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
@@ -224,7 +224,7 @@ private struct DayDetailContentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(alignment: .topTrailing) {
                             Image(systemName: "pencil.circle.fill")
-                                .font(.system(size: 28))
+                                .font(.appRegular(size: 28))
                                 .foregroundStyle(AppColors.primaryBlueDark)
                                 .padding(8)
                         }
@@ -235,10 +235,10 @@ private struct DayDetailContentView: View {
                             .frame(height: 120)
                         VStack(spacing: 8) {
                             Image(systemName: "camera.fill")
-                                .font(.system(size: 28))
+                                .font(.appRegular(size: 28))
                                 .foregroundStyle(AppColors.primaryBlueDark.opacity(0.6))
                             Text("사진 추가")
-                                .font(.system(size: 13))
+                                .font(.appRegular(size: 13))
                                 .foregroundStyle(AppColors.textSecondary)
                         }
                     }
@@ -256,19 +256,19 @@ private struct DayDetailContentView: View {
     private var journalTextSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("오늘의 기록")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.appBold(size: 15))
                 .foregroundStyle(AppColors.textPrimary)
 
             ZStack(alignment: .topLeading) {
                 if journalText.isEmpty {
                     Text("오늘 하루를 기록해보세요...")
-                        .font(.system(size: 14))
+                        .font(.appRegular(size: 14))
                         .foregroundStyle(AppColors.textSecondary.opacity(0.5))
                         .padding(.top, 8)
                         .padding(.leading, 4)
                 }
                 TextEditor(text: $journalText)
-                    .font(.system(size: 14))
+                    .font(.appRegular(size: 14))
                     .foregroundStyle(AppColors.textPrimary)
                     .frame(minHeight: 140)
                     .scrollContentBackground(.hidden)

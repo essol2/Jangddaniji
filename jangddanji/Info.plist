@@ -8,7 +8,8 @@
 	</array>
 	<key>UIAppFonts</key>
 	<array>
-		<string>EF_jejudoldam.ttf</string>
+		<string>HakgyoansimBadasseugi-B.ttf</string>
+		<string>HakgyoansimBadasseugi-L.ttf</string>
 	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

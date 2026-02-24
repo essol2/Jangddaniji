@@ -7,26 +7,26 @@ struct PlanningDistanceView: View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("하루에 몇 km씩 걸을까요?")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.appBold(size: 18))
                 Text("자신의 체력에 맞는 목표를 설정하세요")
-                    .font(.system(size: 14))
+                    .font(.appRegular(size: 14))
                     .foregroundStyle(AppColors.textSecondary)
             }
 
             VStack(spacing: 20) {
                 HStack {
                     Text("일일 목표 거리")
-                        .font(.system(size: 15))
+                        .font(.appRegular(size: 15))
 
                     Spacer()
 
                     HStack(spacing: 4) {
                         Text("\(Int(viewModel.dailyDistanceKm))")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.appBold(size: 20))
                             .foregroundStyle(AppColors.primaryBlueDark)
                             .frame(minWidth: 36)
                         Text("km")
-                            .font(.system(size: 15))
+                            .font(.appRegular(size: 15))
                             .foregroundStyle(AppColors.textSecondary)
                     }
                     .padding(.horizontal, 12)
@@ -44,7 +44,7 @@ struct PlanningDistanceView: View {
                         Spacer()
                         Text("50km")
                     }
-                    .font(.system(size: 12))
+                    .font(.appRegular(size: 12))
                     .foregroundStyle(AppColors.textSecondary)
                 }
 
@@ -76,7 +76,7 @@ struct PlanningDistanceView: View {
                 .fill(color)
                 .frame(width: 8, height: 8)
             Text(text)
-                .font(.system(size: 13, weight: .medium))
+                .font(.appRegular(size: 13))
                 .foregroundStyle(color)
         }
         .padding(.horizontal, 12)

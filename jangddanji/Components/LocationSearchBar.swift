@@ -18,16 +18,16 @@ struct LocationSearchBar: View {
             HStack(spacing: 10) {
                 Image(systemName: "mappin.circle.fill")
                     .foregroundStyle(AppColors.primaryBlueDark)
-                    .font(.system(size: 20))
+                    .font(.appRegular(size: 20))
 
                 if let location = selectedLocation {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(location.name)
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.appRegular(size: 16))
                             if !location.subtitle.isEmpty {
                                 Text(location.subtitle)
-                                    .font(.system(size: 12))
+                                    .font(.appRegular(size: 12))
                                     .foregroundStyle(AppColors.textSecondary)
                             }
                         }
@@ -42,7 +42,7 @@ struct LocationSearchBar: View {
                     }
                 } else {
                     TextField(placeholder, text: $searchText)
-                        .font(.system(size: 16))
+                        .font(.appRegular(size: 16))
                         .autocorrectionDisabled()
                 }
             }
@@ -68,11 +68,11 @@ struct LocationSearchBar: View {
                                     .frame(width: 24)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(result.name)
-                                        .font(.system(size: 15, weight: .medium))
+                                        .font(.appRegular(size: 15))
                                         .foregroundStyle(AppColors.textPrimary)
                                     if !result.subtitle.isEmpty {
                                         Text(result.subtitle)
-                                            .font(.system(size: 12))
+                                            .font(.appRegular(size: 12))
                                             .foregroundStyle(AppColors.textSecondary)
                                             .lineLimit(1)
                                     }

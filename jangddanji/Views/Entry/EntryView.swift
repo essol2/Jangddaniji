@@ -25,19 +25,19 @@ struct EntryView: View {
                     .frame(width: 80, height: 80)
                     .overlay {
                         Image(systemName: "mappin.and.ellipse")
-                            .font(.system(size: 36))
+                            .font(.appRegular(size: 36))
                             .foregroundStyle(AppColors.primaryBlueDark)
                     }
                     .padding(.bottom, 20)
 
                 // App name
                 Text("장딴지")
-                    .font(.jejuDoldam(size: 36))
+                    .font(.appBold(size: 36))
                     .foregroundStyle(AppColors.textPrimary)
 
                 // Tagline
                 Text("당신의 장거리 단짝 지도")
-                    .font(.system(size: 15))
+                    .font(.appRegular(size: 15))
                     .foregroundStyle(AppColors.textSecondary)
                     .padding(.top, 4)
 
@@ -50,9 +50,9 @@ struct EntryView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "mappin.circle.fill")
-                                .font(.system(size: 18))
+                                .font(.appRegular(size: 18))
                             Text("새로운 발걸음")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.appBold(size: 17))
                         }
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -67,9 +67,9 @@ struct EntryView: View {
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "book.fill")
-                                    .font(.system(size: 18))
+                                    .font(.appRegular(size: 18))
                                 Text("발걸음 기록보기")
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(.appBold(size: 17))
                             }
                             .foregroundStyle(AppColors.textPrimary)
                             .frame(maxWidth: .infinity)
@@ -89,7 +89,7 @@ struct EntryView: View {
                     Text("한 걸음 한 걸음이 모여")
                     Text("위대한 여정을 만듭니다")
                 }
-                .font(.system(size: 13))
+                .font(.appRegular(size: 13))
                 .foregroundStyle(AppColors.textSecondary.opacity(0.7))
                 .padding(.bottom, 30)
             }
