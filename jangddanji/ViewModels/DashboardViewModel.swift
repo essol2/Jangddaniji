@@ -11,18 +11,22 @@ final class DashboardViewModel {
         self.journey = journey
     }
 
+    var totalCount: Int {
+        journey.dayRoutes.count
+    }
+
+    var completedCount: Int {
+        journey.dayRoutes.filter { $0.status == .completed }.count
+    }
+
     var completionPercentage: Int {
-        let total = journey.dayRoutes.count
-        guard total > 0 else { return 0 }
-        let completed = journey.dayRoutes.filter { $0.status == .completed }.count
-        return Int(Double(completed) / Double(total) * 100)
+        guard totalCount > 0 else { return 0 }
+        return Int(Double(completedCount) / Double(totalCount) * 100)
     }
 
     var completionRate: Double {
-        let total = journey.dayRoutes.count
-        guard total > 0 else { return 0 }
-        let completed = journey.dayRoutes.filter { $0.status == .completed }.count
-        return Double(completed) / Double(total)
+        guard totalCount > 0 else { return 0 }
+        return Double(completedCount) / Double(totalCount)
     }
 
     var todayRoute: DayRoute? {

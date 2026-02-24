@@ -53,19 +53,24 @@ private struct DashboardContentView: View {
             VStack(spacing: 0) {
                 headerSection
 
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     completionCard
 
                     if let today = viewModel.todayRoute {
-                        todayCard(today)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("오늘의 구간")
+                                .font(.appBold(size: 16))
+                                .foregroundStyle(AppColors.textPrimary)
+                            todayCard(today)
+                        }
                     }
 
                     scheduleSection
                 }
-                .padding(16)
+                .padding(20)
             }
         }
-        .background(AppColors.background)
+        .background(Color.white)
         .navigationBarHidden(true)
         .onAppear {
             viewModel.updateStatuses(context: modelContext)
@@ -94,113 +99,121 @@ private struct DashboardContentView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("장딴지")
-                    .font(.appBold(size: 26))
-                    .foregroundStyle(AppColors.textPrimary)
-                Text(journey.title)
-                    .font(.appRegular(size: 13))
-                    .foregroundStyle(AppColors.textSecondary)
-                    .lineLimit(1)
-                Text("\(AppDateFormatter.shortDate.string(from: journey.startDate)) ~ \(AppDateFormatter.shortDate.string(from: journey.endDate))")
-                    .font(.appRegular(size: 12))
-                    .foregroundStyle(AppColors.textSecondary.opacity(0.8))
+        VStack(alignment: .leading, spacing: 10) {
+            Button {
+                router.pop()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.appRegular(size: 13))
+                    Text("돌아가기")
+                        .font(.appRegular(size: 14))
+                }
+                .foregroundStyle(AppColors.primaryBlueDark)
             }
 
-            Spacer()
-
-            Button {
-                router.navigateTo(.archiveList)
-            } label: {
-                Image(systemName: "book.closed.fill")
-                    .font(.appRegular(size: 20))
-                    .foregroundStyle(AppColors.primaryBlueDark)
-                    .padding(10)
-                    .background(.white.opacity(0.8))
-                    .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 4) {
+                Text(journey.title)
+                    .font(.appBold(size: 26))
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("\(AppDateFormatter.shortDate.string(from: journey.startDate)) ~ \(AppDateFormatter.shortDate.string(from: journey.endDate))")
+                    .font(.appRegular(size: 13))
+                    .foregroundStyle(AppColors.textSecondary)
             }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 20)
+        .padding(.top, 16)
+        .padding(.bottom, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.headerGradient)
+        .background(Color.white)
     }
 
     // MARK: - Completion card
 
     private var completionCard: some View {
-        VStack(spacing: 12) {
-            HStack(alignment: .bottom, spacing: 4) {
-                Text("\(viewModel.completionPercentage)%")
-                    .font(.appBold(size: 52))
-                    .foregroundStyle(AppColors.accentYellow)
-                Text("완주")
-                    .font(.appBold(size: 20))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .padding(.bottom, 8)
+        VStack(spacing: 14) {
+            Text("\(viewModel.completionPercentage)% 완주")
+                .font(.appBold(size: 36))
+                .foregroundStyle(AppColors.primaryBlueDark)
+                .frame(maxWidth: .infinity, alignment: .center)
 
-                Spacer()
+            Text("목표의 \(viewModel.completedCount)/\(viewModel.totalCount) 지점을 통과했어요")
+                .font(.appRegular(size: 13))
+                .foregroundStyle(AppColors.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .center)
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("남은 거리")
-                        .font(.appRegular(size: 12))
+            VStack(spacing: 6) {
+                ProgressBarView(progress: viewModel.completionRate)
+
+                HStack {
+                    Text("시작")
+                        .font(.appRegular(size: 11))
                         .foregroundStyle(AppColors.textSecondary)
-                    Text(DistanceFormatter.formattedDetailed(viewModel.remainingDistance))
-                        .font(.appBold(size: 18))
-                        .foregroundStyle(AppColors.textPrimary)
+                    Spacer()
+                    Text("완료")
+                        .font(.appRegular(size: 11))
+                        .foregroundStyle(AppColors.textSecondary)
                 }
             }
-
-            ProgressBarView(progress: viewModel.completionRate)
         }
         .padding(20)
-        .background(AppColors.cardBackground)
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
     }
 
-    // MARK: - Today's card
+    // MARK: - Today card
 
     private func todayCard(_ dayRoute: DayRoute) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 16) {
+            // Two-column: departure | icon | arrival
+            HStack(spacing: 0) {
+                VStack(spacing: 6) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.appRegular(size: 22))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                    Text(dayRoute.startLocationName)
+                        .font(.appBold(size: 15))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .lineLimit(1)
+                    Text("출발지")
+                        .font(.appRegular(size: 11))
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Image(systemName: "figure.walk")
+                    .font(.appRegular(size: 26))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                    .frame(width: 50)
+
+                VStack(spacing: 6) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.appRegular(size: 22))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                    Text(dayRoute.endLocationName)
+                        .font(.appBold(size: 15))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .lineLimit(1)
+                    Text("도착지")
+                        .font(.appRegular(size: 11))
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            Divider()
+
+            // Bottom: 남은 거리 + buttons
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("오늘의 구간")
-                        .font(.appRegular(size: 12))
-                        .foregroundStyle(.white.opacity(0.75))
-                    Text("Day \(dayRoute.dayNumber) · \(AppDateFormatter.dayMonth.string(from: dayRoute.date))")
-                        .font(.appBold(size: 14))
-                        .foregroundStyle(.white)
+                    Text("남은 거리")
+                        .font(.appRegular(size: 11))
+                        .foregroundStyle(AppColors.textSecondary)
+                    Text(DistanceFormatter.formattedDetailed(dayRoute.distance))
+                        .font(.appBold(size: 18))
+                        .foregroundStyle(AppColors.primaryBlueDark)
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.appBold(size: 14))
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-
-            HStack(spacing: 6) {
-                Image(systemName: "circle.fill")
-                    .font(.appRegular(size: 8))
-                    .foregroundStyle(.white.opacity(0.7))
-                Text(dayRoute.startLocationName)
-                    .font(.appBold(size: 15))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Image(systemName: "arrow.right")
-                    .font(.appRegular(size: 12))
-                    .foregroundStyle(.white.opacity(0.6))
-                Text(dayRoute.endLocationName)
-                    .font(.appBold(size: 15))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Spacer()
-            }
-
-            HStack {
-                Label(DistanceFormatter.formattedDetailed(dayRoute.distance), systemImage: "figure.walk")
-                    .font(.appRegular(size: 13))
-                    .foregroundStyle(.white.opacity(0.8))
 
                 Spacer()
 
@@ -211,10 +224,10 @@ private struct DashboardContentView: View {
                     } label: {
                         Label("길찾기", systemImage: "map.fill")
                             .font(.appBold(size: 13))
-                            .foregroundStyle(AppColors.primaryBlueDark)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
-                            .background(.white)
+                            .padding(.vertical, 8)
+                            .background(AppColors.primaryBlueDark)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
@@ -223,19 +236,19 @@ private struct DashboardContentView: View {
                     } label: {
                         Label("완료", systemImage: "checkmark")
                             .font(.appBold(size: 13))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(AppColors.primaryBlueDark)
                             .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
-                            .background(.white.opacity(0.25))
+                            .padding(.vertical, 8)
+                            .background(AppColors.primaryBlueDark.opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
             }
         }
         .padding(16)
-        .background(AppColors.primaryBlueDark)
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: AppColors.primaryBlueDark.opacity(0.35), radius: 8, y: 4)
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
         .onTapGesture {
             router.navigateTo(.dayDetail(dayRouteID: dayRoute.id))
         }
