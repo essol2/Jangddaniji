@@ -1,10 +1,3 @@
-//
-//  jangddanjiApp.swift
-//  jangddanji
-//
-//  Created by 이은솔 on 2/24/26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -12,7 +5,9 @@ import SwiftData
 struct jangddanjiApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Journey.self,
+            DayRoute.self,
+            JournalEntry.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -23,10 +18,36 @@ struct jangddanjiApp: App {
         }
     }()
 
+    @State private var router = AppRouter()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack(path: $router.path) {
+                EntryView()
+                    .navigationDestination(for: AppDestination.self) { destination in
+                        destinationView(for: destination)
+                    }
+            }
+            .environment(router)
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    @ViewBuilder
+    private func destinationView(for destination: AppDestination) -> some View {
+        switch destination {
+        case .planning:
+            PlanningContainerView()
+        case .dashboard:
+            DashboardView()
+        case .dayDetail(let id):
+            DayDetailView(dayRouteID: id)
+        case .routeModify(let id):
+            RouteModifyView(dayRouteID: id)
+        case .archiveList:
+            JourneyArchiveListView()
+        case .archiveDetail(let id):
+            JourneyArchiveDetailView(journeyID: id)
+        }
     }
 }
