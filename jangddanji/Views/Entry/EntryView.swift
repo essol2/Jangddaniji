@@ -84,9 +84,9 @@ struct EntryView: View {
                             router.navigateTo(.archiveList)
                         } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "book.fill")
+                                Image(systemName: "clock.arrow.circlepath")
                                     .font(.appRegular(size: 18))
-                                Text("발걸음 기록보기")
+                                Text("이전 발걸음")
                                     .font(.appBold(size: 17))
                             }
                             .foregroundStyle(AppColors.textPrimary)
