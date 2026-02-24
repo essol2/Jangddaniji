@@ -72,6 +72,18 @@ final class DayDetailViewModel {
         try? context.save()
     }
 
+    func reorderPhotos(_ newOrder: [Data], context: ModelContext) {
+        guard let entry = dayRoute.journalEntry else { return }
+        let sorted = entry.sortedPhotos
+        // newOrder의 Data 순서에 맞춰 sortOrder를 재설정
+        for (newIndex, data) in newOrder.enumerated() {
+            if let photo = sorted.first(where: { $0.photoData == data }) {
+                photo.sortOrder = newIndex
+            }
+        }
+        try? context.save()
+    }
+
     private func ensureJournalEntry(context: ModelContext) {
         guard dayRoute.journalEntry == nil else { return }
         let entry = JournalEntry(text: "")
@@ -91,6 +103,12 @@ final class DayDetailViewModel {
     // DEBUG: 모든 날짜에서 완료 가능 (배포 시 dayRoute.status == .today 로 변경)
     var canComplete: Bool {
         dayRoute.status != .completed
+    }
+
+    var isLastSegment: Bool {
+        guard let journey = dayRoute.journey else { return false }
+        let incomplete = journey.dayRoutes.filter { $0.status != .completed }
+        return incomplete.count == 1 && incomplete.first?.id == dayRoute.id
     }
 
     func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0) {

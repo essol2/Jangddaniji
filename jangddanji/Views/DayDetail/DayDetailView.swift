@@ -31,6 +31,10 @@ private struct DayDetailContentView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var pedometer = PedometerService()
     @State private var showCelebration = false
+    @State private var showPhotoViewer = false
+    @State private var selectedPhotoIndex = 0
+    @State private var isEditingPhotos = false
+    @State private var draggingPhotoIndex: Int?
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -55,6 +59,9 @@ private struct DayDetailContentView: View {
             }
         }
         .background(AppColors.background)
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .navigationBarHidden(true)
         .onAppear {
             journalText = viewModel.initialText
@@ -106,6 +113,15 @@ private struct DayDetailContentView: View {
                 )
                 .transition(.opacity)
             }
+
+            if showPhotoViewer {
+                PhotoViewerOverlay(
+                    photos: journalPhotos,
+                    currentIndex: $selectedPhotoIndex,
+                    isPresented: $showPhotoViewer
+                )
+                .transition(.opacity)
+            }
         } // ZStack
     }
 
@@ -130,12 +146,20 @@ private struct DayDetailContentView: View {
 
                 if viewModel.canComplete {
                     Button {
+                        let isLastSegment = viewModel.isLastSegment
                         viewModel.markCompleted(
                             context: modelContext,
                             totalSteps: pedometer.totalSteps,
                             totalDistanceKm: pedometer.totalDistanceKm
                         )
-                        withAnimation { showCelebration = true }
+                        if isLastSegment, let journeyID = dayRoute.journey?.id {
+                            router.popToRoot()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                router.navigateTo(.journeyComplete(journeyID: journeyID))
+                            }
+                        } else {
+                            withAnimation { showCelebration = true }
+                        }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark")
@@ -284,23 +308,86 @@ private struct DayDetailContentView: View {
                         .foregroundStyle(AppColors.textSecondary)
                 }
                 Spacer()
+                if journalPhotos.count > 1 {
+                    Button {
+                        withAnimation { isEditingPhotos.toggle() }
+                    } label: {
+                        Text(isEditingPhotos ? "완료" : "순서 변경")
+                            .font(.appBold(size: 12))
+                            .foregroundStyle(isEditingPhotos ? .white : AppColors.primaryBlueDark)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(isEditingPhotos ? AppColors.primaryBlueDark : AppColors.primaryBlueDark.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+                }
             }
 
-            // 사진 그리드
             if !journalPhotos.isEmpty {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8)
-                ], spacing: 8) {
-                    ForEach(Array(journalPhotos.enumerated()), id: \.offset) { index, photoData in
-                        if let uiImage = UIImage(data: photoData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 120)
-                                .clipped()
+                if isEditingPhotos {
+                    // 순서 변경 모드: 길게 눌러 드래그
+                    VStack(spacing: 8) {
+                        ForEach(Array(journalPhotos.enumerated()), id: \.offset) { index, photoData in
+                            if let uiImage = UIImage(data: photoData) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "line.3.horizontal")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(AppColors.textSecondary.opacity(0.5))
+
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 64, height: 64)
+                                        .clipped()
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                                    Text("\(index + 1)번째 사진")
+                                        .font(.appRegular(size: 13))
+                                        .foregroundStyle(AppColors.textPrimary)
+
+                                    Spacer()
+                                }
+                                .padding(8)
+                                .background(draggingPhotoIndex == index
+                                    ? AppColors.primaryBlueDark.opacity(0.08)
+                                    : Color.gray.opacity(0.04))
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(alignment: .topTrailing) {
+                                .onDrag {
+                                    draggingPhotoIndex = index
+                                    return NSItemProvider(object: "\(index)" as NSString)
+                                }
+                                .onDrop(of: [.text], delegate: PhotoDropDelegate(
+                                    destinationIndex: index,
+                                    photos: $journalPhotos,
+                                    draggingIndex: $draggingPhotoIndex,
+                                    onReorder: {
+                                        viewModel.reorderPhotos(journalPhotos, context: modelContext)
+                                    }
+                                ))
+                            }
+                        }
+                    }
+                } else {
+                    // 일반 모드: 2열 그리드
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 8),
+                        GridItem(.flexible(), spacing: 8)
+                    ], spacing: 8) {
+                        ForEach(Array(journalPhotos.enumerated()), id: \.offset) { index, photoData in
+                            if let uiImage = UIImage(data: photoData) {
+                                ZStack(alignment: .topTrailing) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(height: 120)
+                                        .clipped()
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .contentShape(RoundedRectangle(cornerRadius: 10))
+                                        .onTapGesture {
+                                            selectedPhotoIndex = index
+                                            withAnimation { showPhotoViewer = true }
+                                        }
+
                                     Button {
                                         deletePhoto(at: index)
                                     } label: {
@@ -311,28 +398,31 @@ private struct DayDetailContentView: View {
                                             .padding(4)
                                     }
                                 }
+                            }
                         }
                     }
                 }
             }
 
             // 사진 추가 버튼
-            PhotosPicker(
-                selection: $selectedPhotos,
-                maxSelectionCount: 5,
-                matching: .images
-            ) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.08))
-                        .frame(height: journalPhotos.isEmpty ? 120 : 52)
-                    HStack(spacing: 8) {
-                        Image(systemName: "camera.fill")
-                            .font(.appRegular(size: journalPhotos.isEmpty ? 28 : 18))
-                            .foregroundStyle(AppColors.primaryBlueDark.opacity(0.6))
-                        Text(journalPhotos.isEmpty ? "사진 추가" : "사진 더 추가")
-                            .font(.appRegular(size: 13))
-                            .foregroundStyle(AppColors.textSecondary)
+            if !isEditingPhotos {
+                PhotosPicker(
+                    selection: $selectedPhotos,
+                    maxSelectionCount: 5,
+                    matching: .images
+                ) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.08))
+                            .frame(height: journalPhotos.isEmpty ? 120 : 52)
+                        HStack(spacing: 8) {
+                            Image(systemName: "camera.fill")
+                                .font(.appRegular(size: journalPhotos.isEmpty ? 28 : 18))
+                                .foregroundStyle(AppColors.primaryBlueDark.opacity(0.6))
+                            Text(journalPhotos.isEmpty ? "사진 추가" : "사진 더 추가")
+                                .font(.appRegular(size: 13))
+                                .foregroundStyle(AppColors.textSecondary)
+                        }
                     }
                 }
             }
@@ -382,5 +472,87 @@ private struct DayDetailContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
         .padding(.bottom, 32)
+    }
+}
+
+// MARK: - Photo Drop Delegate
+
+private struct PhotoDropDelegate: DropDelegate {
+    let destinationIndex: Int
+    @Binding var photos: [Data]
+    @Binding var draggingIndex: Int?
+    var onReorder: () -> Void
+
+    func dropEntered(info: DropInfo) {
+        guard let from = draggingIndex, from != destinationIndex else { return }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            photos.move(fromOffsets: IndexSet(integer: from), toOffset: destinationIndex > from ? destinationIndex + 1 : destinationIndex)
+        }
+        draggingIndex = destinationIndex
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggingIndex = nil
+        onReorder()
+        return true
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+}
+
+// MARK: - Photo Viewer Overlay
+
+private struct PhotoViewerOverlay: View {
+    let photos: [Data]
+    @Binding var currentIndex: Int
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            // 스와이프로 사진 전환
+            TabView(selection: $currentIndex) {
+                ForEach(Array(photos.enumerated()), id: \.offset) { index, photoData in
+                    if let uiImage = UIImage(data: photoData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .tag(index)
+                    }
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: photos.count > 1 ? .automatic : .never))
+
+            // 닫기 버튼 + 카운터
+            VStack {
+                HStack {
+                    if photos.count > 1 {
+                        Text("\(currentIndex + 1) / \(photos.count)")
+                            .font(.appBold(size: 15))
+                            .foregroundStyle(.white)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        withAnimation { isPresented = false }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.appBold(size: 16))
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(.white.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+
+                Spacer()
+            }
+        }
     }
 }

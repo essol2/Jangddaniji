@@ -90,6 +90,9 @@ private struct DashboardContentView: View {
                 journey.totalDistanceWalked = pedometer.totalDistanceKm
                 try? modelContext.save()
                 router.popToRoot()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    router.navigateTo(.journeyComplete(journeyID: journey.id))
+                }
             }
         }
         .confirmationDialog(

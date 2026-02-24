@@ -24,31 +24,49 @@ struct JourneyArchiveDetailView: View {
 private struct ArchiveDetailContentView: View {
     let journey: Journey
     @Environment(AppRouter.self) private var router
+    @State private var showPhotoViewer = false
+    @State private var viewerPhotos: [Data] = []
+    @State private var viewerIndex = 0
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                headerSection
+        ZStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    headerSection
 
-                VStack(spacing: 12) {
-                    summaryCard
+                    VStack(spacing: 12) {
+                        summaryCard
 
-                    Text("여정 기록")
-                        .font(.appBold(size: 16))
-                        .foregroundStyle(AppColors.textPrimary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 4)
+                        Text("여정 기록")
+                            .font(.appBold(size: 16))
+                            .foregroundStyle(AppColors.textPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 4)
 
-                    ForEach(journey.sortedDayRoutes) { dayRoute in
-                        ArchiveDayCard(dayRoute: dayRoute)
+                        ForEach(journey.sortedDayRoutes) { dayRoute in
+                            ArchiveDayCard(dayRoute: dayRoute) { photos, index in
+                                viewerPhotos = photos
+                                viewerIndex = index
+                                withAnimation { showPhotoViewer = true }
+                            }
+                        }
                     }
+                    .padding(16)
+                    .padding(.bottom, 32)
                 }
-                .padding(16)
-                .padding(.bottom, 32)
+            }
+            .background(AppColors.background)
+            .navigationBarHidden(true)
+
+            if showPhotoViewer {
+                ArchivePhotoViewerOverlay(
+                    photos: viewerPhotos,
+                    currentIndex: $viewerIndex,
+                    isPresented: $showPhotoViewer
+                )
+                .transition(.opacity)
             }
         }
-        .background(AppColors.background)
-        .navigationBarHidden(true)
     }
 
     // MARK: - Header
@@ -92,74 +110,80 @@ private struct ArchiveDetailContentView: View {
     // MARK: - Summary card
 
     private var summaryCard: some View {
-        VStack(spacing: 14) {
-            // 상단: 총 거리, 총 일수, 완주 구간
-            HStack {
-                Spacer()
-                statItem(value: DistanceFormatter.formattedDetailed(journey.totalDistance), label: "총 거리")
-                Spacer()
-                Divider().frame(height: 40)
-                Spacer()
-                statItem(value: "\(journey.numberOfDays)일", label: "총 일수")
-                Spacer()
-                Divider().frame(height: 40)
-                Spacer()
-                statItem(value: "\(journey.dayRoutes.filter { $0.status == .completed }.count)구간", label: "완주")
-                Spacer()
+        VStack(spacing: 10) {
+            // 상단 3개: 총 거리, 총 일수, 완주 구간
+            HStack(spacing: 10) {
+                StatCard(
+                    icon: "map.fill",
+                    value: DistanceFormatter.formattedDetailed(journey.totalDistance),
+                    label: "총 거리",
+                    tint: AppColors.primaryBlueDark
+                )
+                StatCard(
+                    icon: "calendar",
+                    value: "\(journey.numberOfDays)일",
+                    label: "총 일수",
+                    tint: .orange
+                )
+                StatCard(
+                    icon: "flag.fill",
+                    value: "\(journey.dayRoutes.filter { $0.status == .completed }.count)구간",
+                    label: "완주",
+                    tint: AppColors.completedGreen
+                )
             }
 
-            Divider()
-
-            // 하단: 총 걸음수, 총 이동 거리
-            HStack {
-                Spacer()
-                statItem(
+            // 하단 2개: 총 걸음, 총 이동
+            HStack(spacing: 10) {
+                StatCard(
                     icon: "shoeprints.fill",
                     value: journey.totalSteps.formatted(),
-                    label: "총 걸음"
+                    label: "총 걸음",
+                    tint: .purple
                 )
-                Spacer()
-                Divider().frame(height: 40)
-                Spacer()
-                statItem(
+                StatCard(
                     icon: "figure.walk",
                     value: String(format: "%.1f km", journey.totalDistanceWalked),
-                    label: "총 이동"
+                    label: "총 이동",
+                    tint: .blue
                 )
-                Spacer()
             }
         }
-        .padding(.vertical, 16)
-        .background(AppColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
     }
+}
 
-    private func statItem(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
+// MARK: - Stat card
+
+private struct StatCard: View {
+    let icon: String
+    let value: String
+    let label: String
+    let tint: Color
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 32, height: 32)
+                .background(tint.opacity(0.12))
+                .clipShape(Circle())
+
             Text(value)
-                .font(.appBold(size: 18))
-                .foregroundStyle(AppColors.primaryBlueDark)
-            Text(label)
-                .font(.appRegular(size: 12))
-                .foregroundStyle(AppColors.textSecondary)
-        }
-    }
+                .font(.appBold(size: 16))
+                .foregroundStyle(AppColors.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
 
-    private func statItem(icon: String, value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.appRegular(size: 13))
-                    .foregroundStyle(AppColors.primaryBlueDark)
-                Text(value)
-                    .font(.appBold(size: 18))
-                    .foregroundStyle(AppColors.primaryBlueDark)
-            }
             Text(label)
-                .font(.appRegular(size: 12))
+                .font(.appRegular(size: 11))
                 .foregroundStyle(AppColors.textSecondary)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(AppColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.04), radius: 3, y: 1)
     }
 }
 
@@ -167,6 +191,7 @@ private struct ArchiveDetailContentView: View {
 
 private struct ArchiveDayCard: View {
     let dayRoute: DayRoute
+    var onPhotoTap: ([Data], Int) -> Void
     @State private var isExpanded = false
 
     private var hasJournal: Bool {
@@ -242,9 +267,10 @@ private struct ArchiveDayCard: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     if !entry.sortedPhotos.isEmpty {
+                        let photosData = entry.sortedPhotos.map(\.photoData)
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                ForEach(entry.sortedPhotos) { photo in
+                                ForEach(Array(entry.sortedPhotos.enumerated()), id: \.element.id) { index, photo in
                                     if let uiImage = UIImage(data: photo.photoData) {
                                         Image(uiImage: uiImage)
                                             .resizable()
@@ -252,6 +278,9 @@ private struct ArchiveDayCard: View {
                                             .frame(width: 200, height: 150)
                                             .clipped()
                                             .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .onTapGesture {
+                                                onPhotoTap(photosData, index)
+                                            }
                                     }
                                 }
                             }
@@ -288,5 +317,58 @@ private struct ArchiveDayCard: View {
         .background(AppColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: .black.opacity(0.04), radius: 3, y: 1)
+    }
+}
+
+// MARK: - Archive Photo Viewer Overlay
+
+private struct ArchivePhotoViewerOverlay: View {
+    let photos: [Data]
+    @Binding var currentIndex: Int
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            TabView(selection: $currentIndex) {
+                ForEach(Array(photos.enumerated()), id: \.offset) { index, photoData in
+                    if let uiImage = UIImage(data: photoData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .tag(index)
+                    }
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: photos.count > 1 ? .automatic : .never))
+
+            VStack {
+                HStack {
+                    if photos.count > 1 {
+                        Text("\(currentIndex + 1) / \(photos.count)")
+                            .font(.appBold(size: 15))
+                            .foregroundStyle(.white)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        withAnimation { isPresented = false }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.appBold(size: 16))
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(.white.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+
+                Spacer()
+            }
+        }
     }
 }

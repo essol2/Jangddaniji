@@ -83,6 +83,8 @@ struct jangddanjiApp: App {
             JourneyArchiveListView()
         case .archiveDetail(let id):
             JourneyArchiveDetailView(journeyID: id)
+        case .journeyComplete(let id):
+            JourneyCompleteView(journeyID: id)
         }
     }
 }

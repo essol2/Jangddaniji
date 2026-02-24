@@ -8,6 +8,7 @@ enum AppDestination: Hashable {
     case routeModify(dayRouteID: UUID)
     case archiveList
     case archiveDetail(journeyID: UUID)
+    case journeyComplete(journeyID: UUID)
 }
 
 @Observable

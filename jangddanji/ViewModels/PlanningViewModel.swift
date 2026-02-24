@@ -75,6 +75,11 @@ final class PlanningViewModel {
 
     func goBack() {
         guard let prevStep = Step(rawValue: currentStep.rawValue - 1) else { return }
+        // 이전 단계로 돌아가면 계산 결과 초기화 (다시 confirm에 올 때 재계산)
+        routeResult = nil
+        daySegments = []
+        segmentNames = []
+        errorMessage = nil
         currentStep = prevStep
     }
 
