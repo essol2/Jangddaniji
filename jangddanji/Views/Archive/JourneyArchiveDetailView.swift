@@ -92,18 +92,42 @@ private struct ArchiveDetailContentView: View {
     // MARK: - Summary card
 
     private var summaryCard: some View {
-        HStack {
-            Spacer()
-            statItem(value: DistanceFormatter.formattedDetailed(journey.totalDistance), label: "총 거리")
-            Spacer()
-            Divider().frame(height: 40)
-            Spacer()
-            statItem(value: "\(journey.numberOfDays)일", label: "총 일수")
-            Spacer()
-            Divider().frame(height: 40)
-            Spacer()
-            statItem(value: "\(journey.dayRoutes.filter { $0.status == .completed }.count)구간", label: "완주")
-            Spacer()
+        VStack(spacing: 14) {
+            // 상단: 총 거리, 총 일수, 완주 구간
+            HStack {
+                Spacer()
+                statItem(value: DistanceFormatter.formattedDetailed(journey.totalDistance), label: "총 거리")
+                Spacer()
+                Divider().frame(height: 40)
+                Spacer()
+                statItem(value: "\(journey.numberOfDays)일", label: "총 일수")
+                Spacer()
+                Divider().frame(height: 40)
+                Spacer()
+                statItem(value: "\(journey.dayRoutes.filter { $0.status == .completed }.count)구간", label: "완주")
+                Spacer()
+            }
+
+            Divider()
+
+            // 하단: 총 걸음수, 총 이동 거리
+            HStack {
+                Spacer()
+                statItem(
+                    icon: "shoeprints.fill",
+                    value: journey.totalSteps.formatted(),
+                    label: "총 걸음"
+                )
+                Spacer()
+                Divider().frame(height: 40)
+                Spacer()
+                statItem(
+                    icon: "figure.walk",
+                    value: String(format: "%.1f km", journey.totalDistanceWalked),
+                    label: "총 이동"
+                )
+                Spacer()
+            }
         }
         .padding(.vertical, 16)
         .background(AppColors.cardBackground)
@@ -121,6 +145,22 @@ private struct ArchiveDetailContentView: View {
                 .foregroundStyle(AppColors.textSecondary)
         }
     }
+
+    private func statItem(icon: String, value: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.appRegular(size: 13))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                Text(value)
+                    .font(.appBold(size: 18))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+            }
+            Text(label)
+                .font(.appRegular(size: 12))
+                .foregroundStyle(AppColors.textSecondary)
+        }
+    }
 }
 
 // MARK: - Day card
@@ -131,7 +171,7 @@ private struct ArchiveDayCard: View {
 
     private var hasJournal: Bool {
         guard let entry = dayRoute.journalEntry else { return false }
-        return !entry.text.isEmpty || entry.photoData != nil
+        return !entry.text.isEmpty || entry.hasAnyPhoto
     }
 
     var body: some View {
@@ -201,13 +241,21 @@ private struct ArchiveDayCard: View {
                     .padding(.horizontal, 14)
 
                 VStack(alignment: .leading, spacing: 12) {
-                    if let photoData = entry.photoData, let uiImage = UIImage(data: photoData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 160)
-                            .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    if !entry.sortedPhotos.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(entry.sortedPhotos) { photo in
+                                    if let uiImage = UIImage(data: photo.photoData) {
+                                        Image(uiImage: uiImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 200, height: 150)
+                                            .clipped()
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     if !entry.text.isEmpty {
@@ -217,7 +265,7 @@ private struct ArchiveDayCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    if entry.text.isEmpty && entry.photoData == nil {
+                    if entry.text.isEmpty && !entry.hasAnyPhoto {
                         Text("기록이 없습니다")
                             .font(.appRegular(size: 13))
                             .foregroundStyle(AppColors.textSecondary.opacity(0.6))

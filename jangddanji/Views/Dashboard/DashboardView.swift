@@ -38,9 +38,11 @@ struct DashboardView: View {
 private struct DashboardContentView: View {
     let journey: Journey
     @State private var viewModel: DashboardViewModel
+    @State private var pedometer = PedometerService()
     @State private var showMapAppPicker = false
     @State private var selectedDayRoute: DayRoute?
     @State private var showStopAlert = false
+    @State private var showCelebration = false
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -50,6 +52,7 @@ private struct DashboardContentView: View {
     }
 
     var body: some View {
+        ZStack {
         ScrollView {
             VStack(spacing: 0) {
                 headerSection
@@ -73,13 +76,19 @@ private struct DashboardContentView: View {
                 .padding(20)
             }
         }
-        .background(Color.white)
+        .background(AppColors.background)
         .navigationBarHidden(true)
         .onAppear {
             viewModel.updateStatuses(context: modelContext)
+            pedometer.setPeriodStart(journey.startDate)
+            pedometer.requestAuthorization()
         }
         .onChange(of: journey.statusRawValue) { _, newValue in
             if newValue == JourneyStatus.completed.rawValue {
+                // 여정 완료 시 누적 걸음수/거리 저장
+                journey.totalSteps = pedometer.totalSteps
+                journey.totalDistanceWalked = pedometer.totalDistanceKm
+                try? modelContext.save()
                 router.popToRoot()
             }
         }
@@ -105,6 +114,16 @@ private struct DashboardContentView: View {
         } message: {
             Text("아직 모든 경로가 완료되지 않았습니다.\n중단하면 이 여정의 데이터가 삭제되며 복구할 수 없습니다.")
         }
+
+            if showCelebration {
+                CelebrationOverlayView(
+                    steps: pedometer.todaySteps,
+                    distanceKm: pedometer.todayDistanceKm,
+                    isPresented: $showCelebration
+                )
+                .transition(.opacity)
+            }
+        } // ZStack
     }
 
     // MARK: - Stop button
@@ -144,7 +163,7 @@ private struct DashboardContentView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 20) {
             Button {
                 router.pop()
             } label: {
@@ -168,7 +187,6 @@ private struct DashboardContentView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
-        .padding(.bottom, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.clear)
     }
@@ -176,42 +194,74 @@ private struct DashboardContentView: View {
     // MARK: - Completion card
 
     private var completionCard: some View {
-        VStack(spacing: 14) {
-            Text("\(viewModel.completionPercentage)% 완주")
-                .font(.appBold(size: 36))
-                .foregroundStyle(AppColors.primaryBlueDark)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-            Text("목표의 \(viewModel.completedCount)/\(viewModel.totalCount) 지점을 통과했어요")
-                .font(.appRegular(size: 13))
-                .foregroundStyle(AppColors.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-            VStack(spacing: 6) {
-                ProgressBarView(progress: viewModel.completionRate)
-
-                HStack {
-                    Text("시작")
-                        .font(.appRegular(size: 11))
-                        .foregroundStyle(AppColors.textSecondary)
-                    Spacer()
-                    Text("완료")
-                        .font(.appRegular(size: 11))
-                        .foregroundStyle(AppColors.textSecondary)
-                }
+        HStack(spacing: 0) {
+            // 완주율
+            VStack(spacing: 4) {
+                Text("\(viewModel.completionPercentage)%")
+                    .font(.appBold(size: 17))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                Text("완주")
+                    .font(.appRegular(size: 10))
+                    .foregroundStyle(AppColors.textSecondary)
             }
+            .frame(maxWidth: .infinity)
+
+            Rectangle()
+                .fill(AppColors.textSecondary.opacity(0.15))
+                .frame(width: 1, height: 28)
+
+            // 구간 통과
+            VStack(spacing: 4) {
+                Text("\(viewModel.completedCount)/\(viewModel.totalCount)")
+                    .font(.appBold(size: 17))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                Text("구간")
+                    .font(.appRegular(size: 10))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+
+            Rectangle()
+                .fill(AppColors.textSecondary.opacity(0.15))
+                .frame(width: 1, height: 28)
+
+            // 총 걸음수
+            VStack(spacing: 4) {
+                Text(pedometer.totalSteps.formatted())
+                    .font(.appBold(size: 17))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                Text("걸음")
+                    .font(.appRegular(size: 10))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+
+            Rectangle()
+                .fill(AppColors.textSecondary.opacity(0.15))
+                .frame(width: 1, height: 28)
+
+            // 총 이동거리
+            VStack(spacing: 4) {
+                Text(String(format: "%.1f km", pedometer.totalDistanceKm))
+                    .font(.appBold(size: 17))
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                Text("이동")
+                    .font(.appRegular(size: 10))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
         }
-        .padding(20)
+        .padding(.vertical, 14)
         .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.04), radius: 4, y: 1)
     }
 
     // MARK: - Today card
 
     private func todayCard(_ dayRoute: DayRoute) -> some View {
         VStack(spacing: 16) {
-            // Two-column: departure | icon | arrival
+            // Two-column: departure | dotted line | icon | dotted line | arrival
             HStack(spacing: 0) {
                 VStack(spacing: 6) {
                     Image(systemName: "mappin.circle.fill")
@@ -227,10 +277,14 @@ private struct DashboardContentView: View {
                 }
                 .frame(maxWidth: .infinity)
 
+                dottedLine
+
                 Image(systemName: "figure.walk")
                     .font(.appRegular(size: 26))
                     .foregroundStyle(AppColors.primaryBlueDark)
-                    .frame(width: 50)
+                    .frame(width: 40)
+
+                dottedLine
 
                 VStack(spacing: 6) {
                     Image(systemName: "mappin.circle.fill")
@@ -247,45 +301,140 @@ private struct DashboardContentView: View {
                 .frame(maxWidth: .infinity)
             }
 
+            // Today's steps & distance
+            HStack(spacing: 10) {
+                HStack(spacing: 6) {
+                    Image(systemName: "shoeprints.fill")
+                        .font(.appRegular(size: 14))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("오늘 걸음")
+                            .font(.appRegular(size: 10))
+                            .foregroundStyle(AppColors.textSecondary)
+                        Text("\(pedometer.todaySteps.formatted()) 걸음")
+                            .font(.appBold(size: 14))
+                            .foregroundStyle(AppColors.textPrimary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(AppColors.primaryBlue.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                HStack(spacing: 6) {
+                    Image(systemName: "figure.walk")
+                        .font(.appRegular(size: 14))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("오늘 이동")
+                            .font(.appRegular(size: 10))
+                            .foregroundStyle(AppColors.textSecondary)
+                        Text(String(format: "%.1f km", pedometer.todayDistanceKm))
+                            .font(.appBold(size: 14))
+                            .foregroundStyle(AppColors.textPrimary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(AppColors.accentYellow.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+
             Divider()
 
-            // Bottom: 남은 거리 + buttons
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("남은 거리")
-                        .font(.appRegular(size: 11))
-                        .foregroundStyle(AppColors.textSecondary)
-                    Text(DistanceFormatter.formattedDetailed(dayRoute.distance))
-                        .font(.appBold(size: 18))
-                        .foregroundStyle(AppColors.primaryBlueDark)
+            // Distance progress
+            VStack(spacing: 12) {
+                let todayGoalKm = dayRoute.distance / 1000.0
+                let walkedKm = pedometer.todayDistanceKm
+                let remaining = max(todayGoalKm - walkedKm, 0)
+                let progress = todayGoalKm > 0 ? min(walkedKm / todayGoalKm, 1.0) : 0
+
+                // Progress bar
+                VStack(spacing: 6) {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(AppColors.primaryBlueDark.opacity(0.12))
+                                .frame(height: 12)
+
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(AppColors.primaryBlueDark)
+                                .frame(width: max(geo.size.width * progress, 0), height: 12)
+                                .animation(.easeInOut(duration: 0.3), value: progress)
+                        }
+                    }
+                    .frame(height: 12)
+
+                    HStack {
+                        Text(String(format: "%.1f km", walkedKm))
+                            .font(.appBold(size: 12))
+                            .foregroundStyle(AppColors.primaryBlueDark)
+                        Spacer()
+                        Text(DistanceFormatter.formattedDetailed(dayRoute.distance))
+                            .font(.appRegular(size: 12))
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
                 }
 
-                Spacer()
-
-                HStack(spacing: 8) {
-                    Button {
-                        selectedDayRoute = dayRoute
-                        showMapAppPicker = true
-                    } label: {
-                        Label("길찾기", systemImage: "map.fill")
-                            .font(.appBold(size: 13))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(AppColors.primaryBlueDark)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                // Remaining + buttons
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("남은 거리")
+                            .font(.appRegular(size: 11))
+                            .foregroundStyle(AppColors.textSecondary)
+                        Text(String(format: "%.1f km", remaining))
+                            .font(.appBold(size: 20))
+                            .foregroundStyle(remaining <= 0 ? AppColors.completedGreen : .orange)
                     }
 
-                    Button {
-                        viewModel.markCompleted(context: modelContext)
-                    } label: {
-                        Label("완료", systemImage: "checkmark")
-                            .font(.appBold(size: 13))
-                            .foregroundStyle(AppColors.primaryBlueDark)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(AppColors.primaryBlueDark.opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        if !viewModel.isTodayCompleted {
+                            Button {
+                                selectedDayRoute = dayRoute
+                                showMapAppPicker = true
+                            } label: {
+                                Label("길찾기", systemImage: "map.fill")
+                                    .font(.appBold(size: 13))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(AppColors.primaryBlueDark)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+
+                            Button {
+                                viewModel.markCompleted(
+                                    context: modelContext,
+                                    totalSteps: pedometer.totalSteps,
+                                    totalDistanceKm: pedometer.totalDistanceKm
+                                )
+                                withAnimation { showCelebration = true }
+                            } label: {
+                                Label("완료", systemImage: "checkmark")
+                                    .font(.appBold(size: 13))
+                                    .foregroundStyle(AppColors.primaryBlueDark)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(AppColors.primaryBlueDark.opacity(0.12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        } else {
+                            Button {
+                                viewModel.undoCompleted(context: modelContext)
+                            } label: {
+                                Label("완료 취소", systemImage: "arrow.uturn.backward")
+                                    .font(.appBold(size: 13))
+                                    .foregroundStyle(.orange)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(.orange.opacity(0.12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
                     }
                 }
             }
@@ -297,6 +446,13 @@ private struct DashboardContentView: View {
         .onTapGesture {
             router.navigateTo(.dayDetail(dayRouteID: dayRoute.id))
         }
+    }
+
+    private var dottedLine: some View {
+        Line()
+            .stroke(style: StrokeStyle(lineWidth: 1.2, dash: [4, 3]))
+            .foregroundStyle(AppColors.primaryBlueDark.opacity(0.3))
+            .frame(width: 24, height: 1)
     }
 
     // MARK: - Schedule section
@@ -325,5 +481,14 @@ private struct DashboardContentView: View {
                 }
             }
         }
+    }
+}
+
+private struct Line: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.width, y: rect.midY))
+        return path
     }
 }

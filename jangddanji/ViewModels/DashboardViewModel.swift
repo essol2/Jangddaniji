@@ -30,7 +30,14 @@ final class DashboardViewModel {
     }
 
     var todayRoute: DayRoute? {
-        journey.sortedDayRoutes.first { $0.status == .today }
+        let today = Calendar.current.startOfDay(for: Date())
+        return journey.sortedDayRoutes.first {
+            Calendar.current.startOfDay(for: $0.date) == today
+        }
+    }
+
+    var isTodayCompleted: Bool {
+        todayRoute?.status == .completed
     }
 
     var remainingDistance: Double {
@@ -57,18 +64,22 @@ final class DashboardViewModel {
         try? context.save()
     }
 
-    func markCompleted(context: ModelContext) {
+    func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0) {
         guard let todayRoute else { return }
         todayRoute.status = .completed
 
-        if let nextRoute = journey.sortedDayRoutes.first(where: { $0.dayNumber == todayRoute.dayNumber + 1 }) {
-            nextRoute.status = .today
-        }
-
         if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
+            journey.totalSteps = totalSteps
+            journey.totalDistanceWalked = totalDistanceKm
             journey.status = .completed
         }
 
+        try? context.save()
+    }
+
+    func undoCompleted(context: ModelContext) {
+        guard let todayRoute, todayRoute.status == .completed else { return }
+        todayRoute.status = .today
         try? context.save()
     }
 

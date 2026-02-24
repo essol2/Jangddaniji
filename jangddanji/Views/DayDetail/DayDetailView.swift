@@ -26,9 +26,11 @@ private struct DayDetailContentView: View {
     let dayRoute: DayRoute
     @State private var viewModel: DayDetailViewModel
     @State private var journalText = ""
-    @State private var journalPhotoData: Data?
+    @State private var journalPhotos: [Data] = []
     @State private var showMapAppPicker = false
-    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var pedometer = PedometerService()
+    @State private var showCelebration = false
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -38,6 +40,7 @@ private struct DayDetailContentView: View {
     }
 
     var body: some View {
+        ZStack {
         ScrollView {
             VStack(spacing: 0) {
                 headerSection
@@ -55,24 +58,31 @@ private struct DayDetailContentView: View {
         .navigationBarHidden(true)
         .onAppear {
             journalText = viewModel.initialText
-            journalPhotoData = viewModel.initialPhotoData
+            journalPhotos = viewModel.initialPhotos
+            if let journey = dayRoute.journey {
+                pedometer.setPeriodStart(journey.startDate)
+            }
+            pedometer.requestAuthorization()
         }
         .onChange(of: journalText) { _, newText in
-            viewModel.scheduleSave(text: newText, photoData: journalPhotoData, context: modelContext)
+            viewModel.scheduleSaveText(newText, context: modelContext)
         }
-        .onChange(of: selectedPhoto) { _, newItem in
+        .onChange(of: selectedPhotos) { _, newItems in
+            guard !newItems.isEmpty else { return }
             Task {
-                guard let newItem else {
-                    journalPhotoData = nil
-                    viewModel.saveJournal(text: journalText, photoData: nil, context: modelContext)
-                    return
+                var newPhotosData: [Data] = []
+                for item in newItems {
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data),
+                       let compressed = DayDetailViewModel.compressImage(uiImage) {
+                        newPhotosData.append(compressed)
+                    }
                 }
-                if let data = try? await newItem.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data),
-                   let compressed = DayDetailViewModel.compressImage(uiImage) {
-                    journalPhotoData = compressed
-                    viewModel.saveJournal(text: journalText, photoData: compressed, context: modelContext)
+                if !newPhotosData.isEmpty {
+                    journalPhotos.append(contentsOf: newPhotosData)
+                    viewModel.addPhotos(newPhotosData, context: modelContext)
                 }
+                selectedPhotos = []
             }
         }
         .confirmationDialog(
@@ -87,6 +97,16 @@ private struct DayDetailContentView: View {
             }
             Button("취소", role: .cancel) {}
         }
+
+            if showCelebration {
+                CelebrationOverlayView(
+                    steps: pedometer.todaySteps,
+                    distanceKm: pedometer.todayDistanceKm,
+                    isPresented: $showCelebration
+                )
+                .transition(.opacity)
+            }
+        } // ZStack
     }
 
     // MARK: - Header
@@ -110,14 +130,41 @@ private struct DayDetailContentView: View {
 
                 if viewModel.canComplete {
                     Button {
-                        viewModel.markCompleted(context: modelContext)
+                        viewModel.markCompleted(
+                            context: modelContext,
+                            totalSteps: pedometer.totalSteps,
+                            totalDistanceKm: pedometer.totalDistanceKm
+                        )
+                        withAnimation { showCelebration = true }
                     } label: {
-                        Image(systemName: "checkmark")
-                            .font(.appBold(size: 15))
-                            .foregroundStyle(.white)
-                            .frame(width: 38, height: 38)
-                            .background(AppColors.primaryBlueDark)
-                            .clipShape(Circle())
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark")
+                                .font(.appBold(size: 13))
+                            Text("완료")
+                                .font(.appBold(size: 13))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(AppColors.primaryBlueDark)
+                        .clipShape(Capsule())
+                    }
+                // DEBUG: 모든 날짜에서 완료 취소 가능 (배포 시 viewModel.isCompleted && viewModel.isTodayRoute 로 변경)
+                } else if viewModel.isCompleted {
+                    Button {
+                        viewModel.undoCompleted(context: modelContext)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.appBold(size: 13))
+                            Text("완료 취소")
+                                .font(.appBold(size: 13))
+                        }
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.orange.opacity(0.12))
+                        .clipShape(Capsule())
                     }
                 }
             }
@@ -227,37 +274,65 @@ private struct DayDetailContentView: View {
 
     private var journalPhotoSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("오늘의 사진")
-                .font(.appBold(size: 15))
-                .foregroundStyle(AppColors.textPrimary)
+            HStack {
+                Text("오늘의 사진")
+                    .font(.appBold(size: 15))
+                    .foregroundStyle(AppColors.textPrimary)
+                if !journalPhotos.isEmpty {
+                    Text("\(journalPhotos.count)장")
+                        .font(.appRegular(size: 13))
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+                Spacer()
+            }
 
-            PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                if let photoData = journalPhotoData, let uiImage = UIImage(data: photoData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 200)
-                        .clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(alignment: .topTrailing) {
-                            Image(systemName: "pencil.circle.fill")
-                                .font(.appRegular(size: 28))
-                                .foregroundStyle(AppColors.primaryBlueDark)
-                                .padding(8)
+            // 사진 그리드
+            if !journalPhotos.isEmpty {
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 8),
+                    GridItem(.flexible(), spacing: 8)
+                ], spacing: 8) {
+                    ForEach(Array(journalPhotos.enumerated()), id: \.offset) { index, photoData in
+                        if let uiImage = UIImage(data: photoData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 120)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(alignment: .topTrailing) {
+                                    Button {
+                                        deletePhoto(at: index)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.system(size: 22))
+                                            .symbolRenderingMode(.palette)
+                                            .foregroundStyle(.white, .black.opacity(0.5))
+                                            .padding(4)
+                                    }
+                                }
                         }
-                } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.gray.opacity(0.08))
-                            .frame(height: 120)
-                        VStack(spacing: 8) {
-                            Image(systemName: "camera.fill")
-                                .font(.appRegular(size: 28))
-                                .foregroundStyle(AppColors.primaryBlueDark.opacity(0.6))
-                            Text("사진 추가")
-                                .font(.appRegular(size: 13))
-                                .foregroundStyle(AppColors.textSecondary)
-                        }
+                    }
+                }
+            }
+
+            // 사진 추가 버튼
+            PhotosPicker(
+                selection: $selectedPhotos,
+                maxSelectionCount: 5,
+                matching: .images
+            ) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.08))
+                        .frame(height: journalPhotos.isEmpty ? 120 : 52)
+                    HStack(spacing: 8) {
+                        Image(systemName: "camera.fill")
+                            .font(.appRegular(size: journalPhotos.isEmpty ? 28 : 18))
+                            .foregroundStyle(AppColors.primaryBlueDark.opacity(0.6))
+                        Text(journalPhotos.isEmpty ? "사진 추가" : "사진 더 추가")
+                            .font(.appRegular(size: 13))
+                            .foregroundStyle(AppColors.textSecondary)
                     }
                 }
             }
@@ -266,6 +341,17 @@ private struct DayDetailContentView: View {
         .background(AppColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+    }
+
+    private func deletePhoto(at index: Int) {
+        guard index < journalPhotos.count else { return }
+        journalPhotos.remove(at: index)
+        if let entry = dayRoute.journalEntry {
+            let sorted = entry.sortedPhotos
+            if index < sorted.count {
+                viewModel.deletePhoto(sorted[index], context: modelContext)
+            }
+        }
     }
 
     // MARK: - Journal text section

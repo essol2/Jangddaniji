@@ -3,8 +3,10 @@ import SwiftUI
 struct DayRouteRowView: View {
     let dayRoute: DayRoute
 
-    private var isToday: Bool { dayRoute.status == .today }
+    private var isToday: Bool { Calendar.current.isDateInToday(dayRoute.date) }
     private var isCompleted: Bool { dayRoute.status == .completed }
+
+    @State private var gradientPhase: CGFloat = -0.3
 
     var body: some View {
         HStack(spacing: 12) {
@@ -63,7 +65,31 @@ struct DayRouteRowView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(isToday ? AppColors.primaryBlueDark : AppColors.cardBackground)
+        .background {
+            if isToday {
+                LinearGradient(
+                    stops: [
+                        .init(color: Color(red: 0.227, green: 0.604, blue: 0.420), location: 0.0 + gradientPhase),   // #3A9A6B deep green
+                        .init(color: Color(red: 0.298, green: 0.761, blue: 0.533), location: 0.25 + gradientPhase),  // #4CC288 main green
+                        .init(color: Color(red: 0.427, green: 0.835, blue: 0.627), location: 0.5 + gradientPhase),   // #6DD5A0 light mint
+                        .init(color: Color(red: 0.298, green: 0.761, blue: 0.533), location: 0.75 + gradientPhase),  // #4CC288 main green
+                        .init(color: Color(red: 0.227, green: 0.604, blue: 0.420), location: 1.0 + gradientPhase)    // #3A9A6B deep green
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .onAppear {
+                    withAnimation(
+                        .easeInOut(duration: 3.0)
+                        .repeatForever(autoreverses: true)
+                    ) {
+                        gradientPhase = 0.3
+                    }
+                }
+            } else {
+                AppColors.cardBackground
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: isToday ? AppColors.primaryBlueDark.opacity(0.3) : .black.opacity(0.04), radius: 4, y: 2)
     }
@@ -74,7 +100,7 @@ struct DayRouteRowView: View {
         case .completed:
             Image(systemName: "checkmark.circle.fill")
                 .font(.appRegular(size: 18))
-                .foregroundStyle(AppColors.completedGreen)
+                .foregroundStyle(isToday ? .white : AppColors.completedGreen)
         case .today:
             Image(systemName: "figure.walk.circle.fill")
                 .font(.appRegular(size: 18))

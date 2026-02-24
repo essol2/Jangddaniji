@@ -33,12 +33,12 @@ struct EntryView: View {
                 // App name
                 Text("장딴지")
                     .font(.appBold(size: 36))
-                    .foregroundStyle(AppColors.textPrimary)
+                    .foregroundStyle(.white)
 
                 // Tagline
                 Text("당신의 장거리 단짝 지도")
-                    .font(.appRegular(size: 15))
-                    .foregroundStyle(AppColors.textSecondary)
+                    .font(.appBold(size: 15))
+                    .foregroundStyle(.white.opacity(0.7))
                     .padding(.top, 4)
 
                 Spacer()
@@ -107,8 +107,8 @@ struct EntryView: View {
                     Text("한 걸음 한 걸음이 모여")
                     Text("위대한 여정을 만듭니다")
                 }
-                .font(.appRegular(size: 13))
-                .foregroundStyle(AppColors.textSecondary.opacity(0.7))
+                .font(.appBold(size: 13))
+                .foregroundStyle(.white.opacity(0.7))
                 .padding(.bottom, 30)
             }
         }

@@ -18,6 +18,9 @@ final class Journey {
     var endDate: Date
     var totalDistance: Double
 
+    var totalSteps: Int
+    var totalDistanceWalked: Double  // km
+
     var statusRawValue: String
     var status: JourneyStatus {
         get { JourneyStatus(rawValue: statusRawValue) ?? .planning }
@@ -61,6 +64,8 @@ final class Journey {
         self.startDate = startDate
         self.endDate = endDate
         self.totalDistance = totalDistance
+        self.totalSteps = 0
+        self.totalDistanceWalked = 0
         self.statusRawValue = JourneyStatus.planning.rawValue
         self.createdAt = Date()
     }

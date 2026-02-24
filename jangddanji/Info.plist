@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDisplayName</key>
+	<string>장딴지</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
@@ -11,6 +15,8 @@
 		<string>HakgyoansimBadasseugi-B.ttf</string>
 		<string>HakgyoansimBadasseugi-L.ttf</string>
 	</array>
+	<key>NSHealthShareUsageDescription</key>
+	<string>오늘의 걸음 수와 이동 거리를 표시하기 위해 건강 데이터에 접근합니다.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>nmap</string>

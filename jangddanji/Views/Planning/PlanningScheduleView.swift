@@ -71,8 +71,10 @@ struct PlanningScheduleView: View {
                     .foregroundStyle(AppColors.primaryBlueDark.opacity(0.3))
             }
             .padding(16)
-            .background(AppColors.primaryBlue.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(AppColors.primaryBlueDark.opacity(0.3), lineWidth: 1.2)
+            )
 
             Spacer()
         }

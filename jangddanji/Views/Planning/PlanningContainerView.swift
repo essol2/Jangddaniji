@@ -87,17 +87,17 @@ struct PlanningContainerView: View {
                     Button {
                         startJourney()
                     } label: {
-                        Text("여정 시작하기")
+                        Text(viewModel.isCalculating ? "경로 계산 중..." : "여정 시작하기")
                             .font(.appBold(size: 16))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(viewModel.daySegments.isEmpty
+                            .background(viewModel.isCalculating || viewModel.daySegments.isEmpty
                                         ? AppColors.primaryBlue.opacity(0.5)
                                         : AppColors.primaryBlueDark)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
-                    .disabled(viewModel.daySegments.isEmpty)
+                    .disabled(viewModel.isCalculating || viewModel.daySegments.isEmpty)
                 } else {
                     Button {
                         viewModel.goNext()

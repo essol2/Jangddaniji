@@ -25,53 +25,100 @@ final class DayDetailViewModel {
         dayRoute.journalEntry?.text ?? ""
     }
 
-    var initialPhotoData: Data? {
-        dayRoute.journalEntry?.photoData
+    // MARK: - Photo accessors
+
+    var initialPhotos: [Data] {
+        dayRoute.journalEntry?.sortedPhotos.map(\.photoData) ?? []
     }
 
     var availableMapApps: [MapApp] {
         mapService.availableApps()
     }
 
-    func scheduleSave(text: String, photoData: Data?, context: ModelContext) {
+    // MARK: - Journal text save (텍스트와 사진을 독립적으로 저장)
+
+    func scheduleSaveText(_ text: String, context: ModelContext) {
         saveTask?.cancel()
         saveTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
-            self.saveJournal(text: text, photoData: photoData, context: context)
+            self.saveJournalText(text, context: context)
         }
     }
 
-    func saveJournal(text: String, photoData: Data?, context: ModelContext) {
-        if let entry = dayRoute.journalEntry {
-            entry.text = text
-            entry.photoData = photoData
-        } else if !text.isEmpty || photoData != nil {
-            let entry = JournalEntry(text: text, photoData: photoData)
-            entry.dayRoute = dayRoute
-            dayRoute.journalEntry = entry
-            context.insert(entry)
+    func saveJournalText(_ text: String, context: ModelContext) {
+        ensureJournalEntry(context: context)
+        dayRoute.journalEntry?.text = text
+        try? context.save()
+    }
+
+    // MARK: - Photo management
+
+    func addPhotos(_ photosData: [Data], context: ModelContext) {
+        ensureJournalEntry(context: context)
+        guard let entry = dayRoute.journalEntry else { return }
+        let currentMaxOrder = entry.photos.map(\.sortOrder).max() ?? -1
+        for (index, data) in photosData.enumerated() {
+            let photo = JournalPhoto(photoData: data, sortOrder: currentMaxOrder + 1 + index)
+            photo.journalEntry = entry
+            entry.photos.append(photo)
+            context.insert(photo)
         }
         try? context.save()
     }
 
+    func deletePhoto(_ photo: JournalPhoto, context: ModelContext) {
+        context.delete(photo)
+        try? context.save()
+    }
+
+    private func ensureJournalEntry(context: ModelContext) {
+        guard dayRoute.journalEntry == nil else { return }
+        let entry = JournalEntry(text: "")
+        entry.dayRoute = dayRoute
+        dayRoute.journalEntry = entry
+        context.insert(entry)
+    }
+
+    var isCompleted: Bool {
+        dayRoute.status == .completed
+    }
+
+    var isTodayRoute: Bool {
+        Calendar.current.isDateInToday(dayRoute.date)
+    }
+
+    // DEBUG: 모든 날짜에서 완료 가능 (배포 시 dayRoute.status == .today 로 변경)
     var canComplete: Bool {
         dayRoute.status != .completed
     }
 
-    func markCompleted(context: ModelContext) {
+    func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0) {
         dayRoute.status = .completed
 
         if let journey = dayRoute.journey {
-            if let next = journey.sortedDayRoutes.first(where: { $0.dayNumber == dayRoute.dayNumber + 1 }),
-               next.status != .completed {
-                next.status = .today
-            }
             if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
+                journey.totalSteps = totalSteps
+                journey.totalDistanceWalked = totalDistanceKm
                 journey.status = .completed
             }
         }
 
+        try? context.save()
+    }
+
+    func undoCompleted(context: ModelContext) {
+        guard dayRoute.status == .completed else { return }
+        // DEBUG: 날짜에 맞는 상태로 복원 (배포 시 .today 고정으로 변경)
+        let today = Calendar.current.startOfDay(for: Date())
+        let routeDay = Calendar.current.startOfDay(for: dayRoute.date)
+        if routeDay == today {
+            dayRoute.status = .today
+        } else if routeDay > today {
+            dayRoute.status = .upcoming
+        } else {
+            dayRoute.status = .today // 과거 날짜도 일단 today로
+        }
         try? context.save()
     }
 
