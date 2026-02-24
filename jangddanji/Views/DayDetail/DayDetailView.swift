@@ -128,7 +128,7 @@ private struct DayDetailContentView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.headerGradient)
+        .background(Color.white)
     }
 
     // MARK: - Map
