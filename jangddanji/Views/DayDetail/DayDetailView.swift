@@ -93,16 +93,33 @@ private struct DayDetailContentView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Button {
-                router.pop()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                        .font(.appBold(size: 14))
-                    Text("뒤로")
-                        .font(.appRegular(size: 15))
+            HStack(alignment: .top) {
+                Button {
+                    router.pop()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.appBold(size: 14))
+                        Text("뒤로")
+                            .font(.appRegular(size: 15))
+                    }
+                    .foregroundStyle(AppColors.primaryBlueDark)
                 }
-                .foregroundStyle(AppColors.primaryBlueDark)
+
+                Spacer()
+
+                if viewModel.canComplete {
+                    Button {
+                        viewModel.markCompleted(context: modelContext)
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .font(.appBold(size: 15))
+                            .foregroundStyle(.white)
+                            .frame(width: 38, height: 38)
+                            .background(AppColors.primaryBlueDark)
+                            .clipShape(Circle())
+                    }
+                }
             }
             .padding(.bottom, 4)
 

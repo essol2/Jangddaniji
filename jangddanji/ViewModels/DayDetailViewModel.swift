@@ -55,6 +55,26 @@ final class DayDetailViewModel {
         try? context.save()
     }
 
+    var canComplete: Bool {
+        dayRoute.status != .completed
+    }
+
+    func markCompleted(context: ModelContext) {
+        dayRoute.status = .completed
+
+        if let journey = dayRoute.journey {
+            if let next = journey.sortedDayRoutes.first(where: { $0.dayNumber == dayRoute.dayNumber + 1 }),
+               next.status != .completed {
+                next.status = .today
+            }
+            if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
+                journey.status = .completed
+            }
+        }
+
+        try? context.save()
+    }
+
     @available(iOS, deprecated: 26.0)
     func openDirections(with app: MapApp) {
         mapService.openDirections(
