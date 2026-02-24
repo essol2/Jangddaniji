@@ -8,13 +8,27 @@ struct PlanningContainerView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text("새로운 여정 계획")
-                    .font(.appBold(size: 22))
+            VStack(alignment: .leading, spacing: 10) {
+                Button {
+                    router.pop()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.appRegular(size: 13))
+                        Text("돌아가기")
+                            .font(.appRegular(size: 14))
+                    }
                     .foregroundStyle(AppColors.primaryBlueDark)
-                Text("나만의 대장정을 설계해보세요")
-                    .font(.appRegular(size: 14))
-                    .foregroundStyle(AppColors.primaryBlueDark.opacity(0.7))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("새로운 여정 계획")
+                        .font(.appBold(size: 22))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                    Text("나만의 대장정을 설계해보세요")
+                        .font(.appRegular(size: 14))
+                        .foregroundStyle(AppColors.primaryBlueDark.opacity(0.7))
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
@@ -105,21 +119,7 @@ struct PlanningContainerView: View {
             .padding(.bottom, 16)
         }
         .background(AppColors.background)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    router.pop()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text("돌아가기")
-                    }
-                    .font(.appRegular(size: 15))
-                    .foregroundStyle(AppColors.primaryBlueDark)
-                }
-            }
-        }
+        .navigationBarHidden(true)
     }
 
     private func startJourney() {
