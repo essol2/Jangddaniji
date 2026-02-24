@@ -51,16 +51,28 @@ struct PlanningScheduleView: View {
                 .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
             }
 
-            HStack {
-                Text("총")
-                    .foregroundStyle(AppColors.textSecondary)
-                Text("\(viewModel.numberOfDays)일")
-                    .font(.appBold(size: 17))
-                    .foregroundStyle(AppColors.primaryBlueDark)
-                Text("간의 여정")
-                    .foregroundStyle(AppColors.textSecondary)
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("총 여정 기간")
+                        .font(.appRegular(size: 13))
+                        .foregroundStyle(AppColors.textSecondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text("\(viewModel.numberOfDays)")
+                            .font(.appBold(size: 32))
+                            .foregroundStyle(AppColors.primaryBlueDark)
+                        Text("일")
+                            .font(.appBold(size: 18))
+                            .foregroundStyle(AppColors.primaryBlueDark)
+                    }
+                }
+                Spacer()
+                Image(systemName: "figure.walk")
+                    .font(.appRegular(size: 28))
+                    .foregroundStyle(AppColors.primaryBlueDark.opacity(0.3))
             }
-            .font(.appRegular(size: 15))
+            .padding(16)
+            .background(AppColors.primaryBlue.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
 
             Spacer()
         }

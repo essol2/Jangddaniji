@@ -40,6 +40,7 @@ private struct DashboardContentView: View {
     @State private var viewModel: DashboardViewModel
     @State private var showMapAppPicker = false
     @State private var selectedDayRoute: DayRoute?
+    @State private var showStopAlert = false
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -66,6 +67,8 @@ private struct DashboardContentView: View {
                     }
 
                     scheduleSection
+
+                    stopButton
                 }
                 .padding(20)
             }
@@ -93,6 +96,48 @@ private struct DashboardContentView: View {
                 }
             }
             Button("취소", role: .cancel) {}
+        }
+        .alert("발걸음을 멈추시겠습니까?", isPresented: $showStopAlert) {
+            Button("계속 걷기", role: .cancel) {}
+            Button("중단하기", role: .destructive) {
+                stopJourney()
+            }
+        } message: {
+            Text("아직 모든 경로가 완료되지 않았습니다.\n중단하면 이 여정의 데이터가 삭제되며 복구할 수 없습니다.")
+        }
+    }
+
+    // MARK: - Stop button
+
+    private var stopButton: some View {
+        Button {
+            showStopAlert = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "stop.circle")
+                    .font(.appRegular(size: 15))
+                Text("발걸음 멈추기")
+                    .font(.appRegular(size: 14))
+            }
+            .foregroundStyle(.red.opacity(0.7))
+            .frame(maxWidth: .infinity)
+            .frame(height: 48)
+            .background(.red.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .padding(.top, 12)
+    }
+
+    private func stopJourney() {
+        // Mark as abandoned first so EntryView's @Query won't find an active journey
+        journey.status = .abandoned
+        try? modelContext.save()
+        // Navigate away
+        router.popToRoot()
+        // Delete after navigation completes to avoid accessing freed backing data
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            modelContext.delete(journey)
+            try? modelContext.save()
         }
     }
 

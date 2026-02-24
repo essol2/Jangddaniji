@@ -55,28 +55,28 @@ struct EntryView: View {
                                 Text("진행 중인 발걸음")
                                     .font(.appBold(size: 17))
                             }
-                            .foregroundStyle(AppColors.primaryBlueDark)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 54)
-                            .background(.white.opacity(0.9))
+                            .background(AppColors.primaryBlueDark)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
-                    }
-
-                    Button {
-                        router.navigateTo(.planning)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "mappin.circle.fill")
-                                .font(.appRegular(size: 18))
-                            Text("새로운 발걸음")
-                                .font(.appBold(size: 17))
+                    } else {
+                        Button {
+                            router.navigateTo(.planning)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "mappin.circle.fill")
+                                    .font(.appRegular(size: 18))
+                                Text("새로운 발걸음")
+                                    .font(.appBold(size: 17))
+                            }
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(AppColors.primaryBlueDark)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(AppColors.primaryBlueDark)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
 
                     if !completedJourneys.isEmpty {
@@ -84,12 +84,12 @@ struct EntryView: View {
                             router.navigateTo(.archiveList)
                         } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "clock.arrow.circlepath")
+                                Image(systemName: "book.fill")
                                     .font(.appRegular(size: 18))
                                 Text("이전 발걸음")
                                     .font(.appBold(size: 17))
                             }
-                            .foregroundStyle(AppColors.textPrimary)
+                            .foregroundStyle(AppColors.primaryBlueDark)
                             .frame(maxWidth: .infinity)
                             .frame(height: 54)
                             .background(.white.opacity(0.9))
