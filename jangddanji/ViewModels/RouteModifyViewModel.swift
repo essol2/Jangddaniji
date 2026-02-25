@@ -135,6 +135,20 @@ final class RouteModifyViewModel {
             }
 
             try? context.save()
+
+            // Live Activity 재시작 (attributes가 고정값이므로 종료 후 새로 시작)
+            if dayRoute.status == .today, LiveActivityManager.shared.isActivityActive {
+                LiveActivityManager.shared.endActivity(isCompleted: false)
+                LiveActivityManager.shared.startActivity(
+                    journeyTitle: journey.title,
+                    dayNumber: dayRoute.dayNumber,
+                    startLocationName: dayRoute.startLocationName,
+                    endLocationName: newEndLocationName,
+                    totalDistanceMeters: todayRoute.totalDistance,
+                    todaySteps: 0,
+                    todayDistanceKm: 0
+                )
+            }
         } catch {
             errorMessage = "경로 계산 실패: \(error.localizedDescription)"
         }
