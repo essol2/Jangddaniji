@@ -65,7 +65,13 @@ struct EntryView: View {
                         }
                     } else {
                         Button {
-                            router.navigateTo(.planning)
+                            if Double.random(in: 0..<1) < 0.2 {
+                                interstitialAd.tryShowAd {
+                                    router.navigateTo(.planning)
+                                }
+                            } else {
+                                router.navigateTo(.planning)
+                            }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "mappin.circle.fill")
