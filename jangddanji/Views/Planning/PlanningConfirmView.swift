@@ -41,12 +41,26 @@ struct PlanningConfirmView: View {
                             DistanceFormatter.formattedDetailed(viewModel.routeResult?.totalDistance ?? 0)
                         )
                         summaryRow("총 일수", "\(viewModel.numberOfDays)일")
+
+                        if viewModel.planningMode == .byDistance {
+                            summaryRow("일일 목표", "\(Int(viewModel.dailyDistanceKm)) km")
+                        }
+
                         summaryRow(
                             "일 평균",
                             DistanceFormatter.formattedDetailed(
                                 (viewModel.routeResult?.totalDistance ?? 0) / Double(viewModel.numberOfDays)
                             )
                         )
+
+                        let dateFormatter: DateFormatter = {
+                            let f = DateFormatter()
+                            f.locale = Locale(identifier: "ko_KR")
+                            f.dateFormat = "yyyy.MM.dd (E)"
+                            return f
+                        }()
+                        summaryRow("시작일", dateFormatter.string(from: viewModel.startDate))
+                        summaryRow("종료일", dateFormatter.string(from: viewModel.endDate))
                     }
                     .padding(16)
                     .background(AppColors.cardBackground)

@@ -37,9 +37,11 @@ struct PlanningContainerView: View {
 
             // Step indicator
             HStack(spacing: 6) {
-                ForEach(PlanningViewModel.Step.allCases, id: \.rawValue) { step in
+                let steps = viewModel.activeSteps
+                let currentIndex = steps.firstIndex(of: viewModel.currentStep) ?? 0
+                ForEach(Array(steps.enumerated()), id: \.element) { index, _ in
                     Capsule()
-                        .fill(step.rawValue <= viewModel.currentStep.rawValue
+                        .fill(index <= currentIndex
                               ? AppColors.primaryBlueDark
                               : AppColors.primaryBlue.opacity(0.3))
                         .frame(height: 4)
@@ -47,6 +49,7 @@ struct PlanningContainerView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.activeSteps.count)
 
             // Content
             Group {
@@ -55,6 +58,8 @@ struct PlanningContainerView: View {
                     PlanningStartLocationView(viewModel: viewModel)
                 case .endLocation:
                     PlanningEndLocationView(viewModel: viewModel)
+                case .modeSelection:
+                    PlanningModeSelectionView(viewModel: viewModel)
                 case .schedule:
                     PlanningScheduleView(viewModel: viewModel)
                 case .distance:

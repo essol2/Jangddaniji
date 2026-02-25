@@ -64,6 +64,26 @@ struct PlanningDistanceView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
 
+            // 출발 예정일 (Mode B용)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("출발 예정일")
+                    .font(.appBold(size: 15))
+
+                DatePicker(
+                    "",
+                    selection: $viewModel.startDate,
+                    in: Date()...,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .environment(\.locale, Locale(identifier: "ko_KR"))
+            }
+            .padding(20)
+            .background(AppColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+
             Spacer()
         }
         .padding(.horizontal, 20)

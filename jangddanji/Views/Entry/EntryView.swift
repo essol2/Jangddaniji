@@ -43,6 +43,15 @@ struct EntryView: View {
 
                 Spacer()
 
+                // Motivational text
+                VStack(spacing: 2) {
+                    Text("한 걸음 한 걸음이 모여")
+                    Text("위대한 여정을 만듭니다")
+                }
+                .font(.appBold(size: 13))
+                .foregroundStyle(.white.opacity(0.7))
+                .padding(.bottom, 24)
+
                 // Buttons
                 VStack(spacing: 12) {
                     if !activeJourneys.isEmpty {
@@ -110,14 +119,11 @@ struct EntryView: View {
                 Spacer()
                     .frame(height: 40)
 
-                // Bottom text
-                VStack(spacing: 2) {
-                    Text("한 걸음 한 걸음이 모여")
-                    Text("위대한 여정을 만듭니다")
-                }
-                .font(.appBold(size: 13))
-                .foregroundStyle(.white.opacity(0.7))
-                .padding(.bottom, 30)
+                // Copyright
+                Text("\u{00A9} 2026 Jangddanji. All rights reserved.")
+                    .font(.appRegular(size: 11))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.bottom, 30)
             }
         }
         .navigationBarHidden(true)
