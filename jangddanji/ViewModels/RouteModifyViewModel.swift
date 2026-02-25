@@ -77,14 +77,20 @@ final class RouteModifyViewModel {
                 numberOfDays: remainingDaysCount
             )
 
+            // 현재 구간의 거리도 재계산 (출발지 → 새 도착지)
+            let todayStart = CLLocationCoordinate2D(latitude: dayRoute.startLatitude, longitude: dayRoute.startLongitude)
+            let todayEnd = CLLocationCoordinate2D(latitude: newEndLatitude, longitude: newEndLongitude)
+            let todayRoute = try await routeService.calculateWalkingRoute(from: todayStart, to: todayEnd)
+
             // 이후 DayRoute 삭제
             let toDelete = journey.sortedDayRoutes.filter { $0.dayNumber > dayRoute.dayNumber }
             for route in toDelete { context.delete(route) }
 
-            // 현재 날의 도착지 업데이트
+            // 현재 날의 도착지 + 거리 업데이트
             dayRoute.endLocationName = newEndLocationName
             dayRoute.endLatitude = newEndLatitude
             dayRoute.endLongitude = newEndLongitude
+            dayRoute.distance = todayRoute.totalDistance
 
             // 새 DayRoute 생성
             for (index, segment) in segments.enumerated() {

@@ -61,6 +61,9 @@ private struct RouteModifyContentView: View {
             }
         }
         .background(AppColors.background)
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .navigationBarHidden(true)
         .onAppear {
             searchQuery = dayRoute.endLocationName

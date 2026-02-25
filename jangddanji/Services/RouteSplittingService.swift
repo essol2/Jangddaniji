@@ -111,12 +111,22 @@ final class RouteSplittingService: RouteSplittingServiceProtocol {
 
         do {
             let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            if let placemark = placemarks.first {
-                return placemark.locality
-                    ?? placemark.subLocality
-                    ?? placemark.thoroughfare
-                    ?? placemark.name
-                    ?? "알 수 없는 위치"
+            if let p = placemarks.first {
+                // 구체적 주소 조합: "서울특별시 종로구 세종대로"
+                var parts: [String] = []
+                if let locality = p.locality {
+                    parts.append(locality)                // 시/도 (e.g. 서울특별시)
+                }
+                if let subLocality = p.subLocality {
+                    parts.append(subLocality)             // 구/동 (e.g. 종로구)
+                }
+                if let thoroughfare = p.thoroughfare, thoroughfare != p.subLocality {
+                    parts.append(thoroughfare)            // 도로명 (e.g. 세종대로)
+                }
+                if !parts.isEmpty {
+                    return parts.joined(separator: " ")
+                }
+                return p.name ?? "알 수 없는 위치"
             }
         } catch {}
 
