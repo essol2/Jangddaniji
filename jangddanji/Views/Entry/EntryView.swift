@@ -47,7 +47,11 @@ struct EntryView: View {
                 VStack(spacing: 12) {
                     if !activeJourneys.isEmpty {
                         Button {
-                            interstitialAd.tryShowAd {
+                            if Double.random(in: 0..<1) < 0.2 {
+                                interstitialAd.tryShowAd {
+                                    router.navigateTo(.dashboard)
+                                }
+                            } else {
                                 router.navigateTo(.dashboard)
                             }
                         } label: {
@@ -65,11 +69,7 @@ struct EntryView: View {
                         }
                     } else {
                         Button {
-                            if Double.random(in: 0..<1) < 0.2 {
-                                interstitialAd.tryShowAd {
-                                    router.navigateTo(.planning)
-                                }
-                            } else {
+                            interstitialAd.tryShowAd {
                                 router.navigateTo(.planning)
                             }
                         } label: {
