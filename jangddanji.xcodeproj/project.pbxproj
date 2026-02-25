@@ -7,7 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A14E11272F4E7CA4004C60DE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A14E11262F4E7CA4004C60DE /* WidgetKit.framework */; };
+		A14E11292F4E7CA4004C60DE /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A14E11282F4E7CA4004C60DE /* SwiftUI.framework */; };
 		A1F8BC7E2F4DF46100608D84 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = A1AD000000000002 /* GoogleMobileAds */; };
+		CAFE00012F4E0001004C60DE /* jangddanjiWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A14E11242F4E7CA4004C60DE /* jangddanjiWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,12 +28,22 @@
 			remoteGlobalIDString = A14E0E6F2F4D8511004C60DE;
 			remoteInfo = jangddanji;
 		};
+		CAFE00022F4E0002004C60DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A14E0E682F4D8511004C60DE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A14E11232F4E7CA4004C60DE;
+			remoteInfo = jangddanjiWidgetsExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		A14E0E702F4D8511004C60DE /* jangddanji.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = jangddanji.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A14E0E812F4D8515004C60DE /* jangddanjiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = jangddanjiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A14E0E8B2F4D8515004C60DE /* jangddanjiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = jangddanjiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A14E11242F4E7CA4004C60DE /* jangddanjiWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = jangddanjiWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A14E11262F4E7CA4004C60DE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		A14E11282F4E7CA4004C60DE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -40,6 +53,13 @@
 				Info.plist,
 			);
 			target = A14E0E6F2F4D8511004C60DE /* jangddanji */;
+		};
+		A14E11382F4E7CA6004C60DE /* Exceptions for "jangddanjiWidgets" folder in "jangddanjiWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A14E11232F4E7CA4004C60DE /* jangddanjiWidgetsExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -62,7 +82,29 @@
 			path = jangddanjiUITests;
 			sourceTree = "<group>";
 		};
+		A14E112A2F4E7CA4004C60DE /* jangddanjiWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A14E11382F4E7CA6004C60DE /* Exceptions for "jangddanjiWidgets" folder in "jangddanjiWidgetsExtension" target */,
+			);
+			path = jangddanjiWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CAFE00042F4E0004004C60DE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CAFE00012F4E0001004C60DE /* jangddanjiWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A14E0E6D2F4D8511004C60DE /* Frameworks */ = {
@@ -87,6 +129,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A14E11212F4E7CA4004C60DE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A14E11292F4E7CA4004C60DE /* SwiftUI.framework in Frameworks */,
+				A14E11272F4E7CA4004C60DE /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -96,6 +147,8 @@
 				A14E0E722F4D8511004C60DE /* jangddanji */,
 				A14E0E842F4D8515004C60DE /* jangddanjiTests */,
 				A14E0E8E2F4D8515004C60DE /* jangddanjiUITests */,
+				A14E112A2F4E7CA4004C60DE /* jangddanjiWidgets */,
+				A14E11252F4E7CA4004C60DE /* Frameworks */,
 				A14E0E712F4D8511004C60DE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -106,8 +159,18 @@
 				A14E0E702F4D8511004C60DE /* jangddanji.app */,
 				A14E0E812F4D8515004C60DE /* jangddanjiTests.xctest */,
 				A14E0E8B2F4D8515004C60DE /* jangddanjiUITests.xctest */,
+				A14E11242F4E7CA4004C60DE /* jangddanjiWidgetsExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A14E11252F4E7CA4004C60DE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A14E11262F4E7CA4004C60DE /* WidgetKit.framework */,
+				A14E11282F4E7CA4004C60DE /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -120,10 +183,12 @@
 				A14E0E6C2F4D8511004C60DE /* Sources */,
 				A14E0E6D2F4D8511004C60DE /* Frameworks */,
 				A14E0E6E2F4D8511004C60DE /* Resources */,
+				CAFE00042F4E0004004C60DE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				CAFE00032F4E0003004C60DE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A14E0E722F4D8511004C60DE /* jangddanji */,
@@ -182,6 +247,28 @@
 			productReference = A14E0E8B2F4D8515004C60DE /* jangddanjiUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A14E11232F4E7CA4004C60DE /* jangddanjiWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A14E11392F4E7CA6004C60DE /* Build configuration list for PBXNativeTarget "jangddanjiWidgetsExtension" */;
+			buildPhases = (
+				A14E11202F4E7CA4004C60DE /* Sources */,
+				A14E11212F4E7CA4004C60DE /* Frameworks */,
+				A14E11222F4E7CA4004C60DE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A14E112A2F4E7CA4004C60DE /* jangddanjiWidgets */,
+			);
+			name = jangddanjiWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = jangddanjiWidgetsExtension;
+			productReference = A14E11242F4E7CA4004C60DE /* jangddanjiWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -208,6 +295,9 @@
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = A14E0E6F2F4D8511004C60DE;
 					};
+					A14E11232F4E7CA4004C60DE = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 				};
 			};
 			buildConfigurationList = A14E0E6B2F4D8511004C60DE /* Build configuration list for PBXProject "jangddanji" */;
@@ -230,6 +320,7 @@
 				A14E0E6F2F4D8511004C60DE /* jangddanji */,
 				A14E0E802F4D8515004C60DE /* jangddanjiTests */,
 				A14E0E8A2F4D8515004C60DE /* jangddanjiUITests */,
+				A14E11232F4E7CA4004C60DE /* jangddanjiWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -250,6 +341,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A14E0E892F4D8515004C60DE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A14E11222F4E7CA4004C60DE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -280,6 +378,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A14E11202F4E7CA4004C60DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -292,6 +397,11 @@
 			isa = PBXTargetDependency;
 			target = A14E0E6F2F4D8511004C60DE /* jangddanji */;
 			targetProxy = A14E0E8C2F4D8515004C60DE /* PBXContainerItemProxy */;
+		};
+		CAFE00032F4E0003004C60DE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A14E11232F4E7CA4004C60DE /* jangddanjiWidgetsExtension */;
+			targetProxy = CAFE00022F4E0002004C60DE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -569,6 +679,72 @@
 			};
 			name = Release;
 		};
+		A14E11362F4E7CA6004C60DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC5T233HM3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = jangddanjiWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = jangddanjiWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sground.jangddanji.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		A14E11372F4E7CA6004C60DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC5T233HM3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = jangddanjiWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = jangddanjiWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sground.jangddanji.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -604,6 +780,15 @@
 			buildConfigurations = (
 				A14E0E9D2F4D8515004C60DE /* Debug */,
 				A14E0E9E2F4D8515004C60DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A14E11392F4E7CA6004C60DE /* Build configuration list for PBXNativeTarget "jangddanjiWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A14E11362F4E7CA6004C60DE /* Debug */,
+				A14E11372F4E7CA6004C60DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

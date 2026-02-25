@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import GoogleMobileAds
 
 final class NativeAdManager: NSObject, ObservableObject {

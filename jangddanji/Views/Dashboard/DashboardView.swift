@@ -84,6 +84,34 @@ private struct DashboardContentView: View {
             pedometer.setPeriodStart(journey.startDate)
             pedometer.requestAuthorization()
             adManager.loadAd()
+            // Live Activity: 오늘 구간이 있고 활동이 실행 중이 아니면 시작
+            let todayRoute = viewModel.todayRoute
+            print("[LiveActivity] todayRoute: \(todayRoute?.startLocationName ?? "nil"), status: \(todayRoute?.status.rawValue ?? "nil"), isActive: \(LiveActivityManager.shared.isActivityActive)")
+            if let today = todayRoute,
+               today.status != .completed,
+               !LiveActivityManager.shared.isActivityActive {
+                print("[LiveActivity] ✅ 시작 조건 충족 — startActivity 호출")
+                LiveActivityManager.shared.startActivity(
+                    journeyTitle: journey.title,
+                    dayNumber: today.dayNumber,
+                    startLocationName: today.startLocationName,
+                    endLocationName: today.endLocationName,
+                    totalDistanceMeters: today.distance,
+                    todaySteps: pedometer.todaySteps,
+                    todayDistanceKm: pedometer.todayDistanceKm
+                )
+            }
+        }
+        .onChange(of: pedometer.todayDistanceKm) { _, newDistance in
+            // Live Activity: 포그라운드에서 걸음수/거리 변경 시 업데이트
+            if let today = viewModel.todayRoute {
+                LiveActivityManager.shared.updateActivity(
+                    todaySteps: pedometer.todaySteps,
+                    todayDistanceKm: newDistance,
+                    totalDistanceMeters: today.distance,
+                    isCompleted: today.status == .completed
+                )
+            }
         }
         .onChange(of: journey.statusRawValue) { _, newValue in
             if newValue == JourneyStatus.completed.rawValue {
@@ -153,6 +181,8 @@ private struct DashboardContentView: View {
     }
 
     private func stopJourney() {
+        // Live Activity 종료
+        LiveActivityManager.shared.endActivity(isCompleted: false)
         // Mark as abandoned first so EntryView's @Query won't find an active journey
         journey.status = .abandoned
         try? modelContext.save()

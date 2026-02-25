@@ -68,6 +68,9 @@ final class DashboardViewModel {
         guard let todayRoute else { return }
         todayRoute.status = .completed
 
+        // Live Activity 종료
+        LiveActivityManager.shared.endActivity(isCompleted: true)
+
         if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
             journey.totalSteps = totalSteps
             journey.totalDistanceWalked = totalDistanceKm
@@ -81,6 +84,17 @@ final class DashboardViewModel {
         guard let todayRoute, todayRoute.status == .completed else { return }
         todayRoute.status = .today
         try? context.save()
+
+        // Live Activity 재시작
+        LiveActivityManager.shared.startActivity(
+            journeyTitle: journey.title,
+            dayNumber: todayRoute.dayNumber,
+            startLocationName: todayRoute.startLocationName,
+            endLocationName: todayRoute.endLocationName,
+            totalDistanceMeters: todayRoute.distance,
+            todaySteps: 0,
+            todayDistanceKm: 0
+        )
     }
 
     @available(iOS, deprecated: 26.0)

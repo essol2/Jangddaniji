@@ -114,6 +114,9 @@ final class DayDetailViewModel {
     func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0) {
         dayRoute.status = .completed
 
+        // Live Activity 종료
+        LiveActivityManager.shared.endActivity(isCompleted: true)
+
         if let journey = dayRoute.journey {
             if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
                 journey.totalSteps = totalSteps
@@ -138,6 +141,19 @@ final class DayDetailViewModel {
             dayRoute.status = .today // 과거 날짜도 일단 today로
         }
         try? context.save()
+
+        // Live Activity 재시작 (오늘 구간인 경우)
+        if let journey = dayRoute.journey, Calendar.current.isDateInToday(dayRoute.date) {
+            LiveActivityManager.shared.startActivity(
+                journeyTitle: journey.title,
+                dayNumber: dayRoute.dayNumber,
+                startLocationName: dayRoute.startLocationName,
+                endLocationName: dayRoute.endLocationName,
+                totalDistanceMeters: dayRoute.distance,
+                todaySteps: 0,
+                todayDistanceKm: 0
+            )
+        }
     }
 
     @available(iOS, deprecated: 26.0)
