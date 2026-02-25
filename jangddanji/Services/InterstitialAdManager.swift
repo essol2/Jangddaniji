@@ -10,7 +10,8 @@ final class InterstitialAdManager: NSObject, ObservableObject {
     private var showCounter = 0
     private var dismissCompletion: (() -> Void)?
 
-    private init(adUnitID: String = "ca-app-pub-4144682979193082/5679905610") {
+    // TODO: 배포 전 실제 ID로 교체: ca-app-pub-4144682979193082/5679905610
+    private init(adUnitID: String = "ca-app-pub-3940256099942544/4411468910") {
         self.adUnitID = adUnitID
         super.init()
     }
