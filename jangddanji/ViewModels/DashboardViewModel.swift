@@ -40,6 +40,14 @@ final class DashboardViewModel {
         todayRoute?.status == .completed
     }
 
+    /// 여정 시작일까지 남은 일수 (D-day). 오늘이 시작일이면 0, 미래면 양수, 이미 시작했으면 nil
+    var daysUntilStart: Int? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let start = Calendar.current.startOfDay(for: journey.startDate)
+        guard start > today else { return nil }
+        return Calendar.current.dateComponents([.day], from: today, to: start).day
+    }
+
     var remainingDistance: Double {
         journey.dayRoutes
             .filter { $0.status == .upcoming || $0.status == .today }

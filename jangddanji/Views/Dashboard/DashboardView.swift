@@ -68,6 +68,8 @@ private struct DashboardContentView: View {
                                 .foregroundStyle(AppColors.textPrimary)
                             todayCard(today)
                         }
+                    } else if let daysLeft = viewModel.daysUntilStart {
+                        dDayCard(daysLeft: daysLeft)
                     }
 
                     scheduleSection
@@ -481,6 +483,52 @@ private struct DashboardContentView: View {
         .onTapGesture {
             router.navigateTo(.dayDetail(dayRouteID: dayRoute.id))
         }
+    }
+
+    // MARK: - D-Day card
+
+    private func dDayCard(daysLeft: Int) -> some View {
+        let messages = [
+            "출발 전, 몸과 마음을 가다듬는 시간입니다",
+            "위대한 여정은 준비하는 순간부터 시작됩니다",
+            "한 걸음을 위한 준비, 지금 이 시간도 여정의 일부입니다",
+            "설레는 마음을 담아 출발을 기다려보세요",
+        ]
+        let message = messages[daysLeft % messages.count]
+
+        return VStack(spacing: 16) {
+            Text("D-\(daysLeft)")
+                .font(.appBold(size: 48))
+                .foregroundStyle(AppColors.primaryBlueDark)
+
+            Text("출발까지 \(daysLeft)일 남았습니다")
+                .font(.appBold(size: 15))
+                .foregroundStyle(AppColors.textPrimary)
+
+            Text(message)
+                .font(.appRegular(size: 14))
+                .foregroundStyle(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+
+            HStack(spacing: 6) {
+                Image(systemName: "calendar")
+                    .font(.appRegular(size: 13))
+                Text("시작일: \(AppDateFormatter.shortDate.string(from: journey.startDate))")
+                    .font(.appRegular(size: 13))
+            }
+            .foregroundStyle(AppColors.primaryBlueDark)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(AppColors.primaryBlueDark.opacity(0.1))
+            .clipShape(Capsule())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+        .padding(.horizontal, 16)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
     }
 
     private var dottedLine: some View {

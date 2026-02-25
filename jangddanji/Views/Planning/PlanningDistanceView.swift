@@ -65,9 +65,11 @@ struct PlanningDistanceView: View {
             .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
 
             // 출발 예정일 (Mode B용)
-            VStack(alignment: .leading, spacing: 12) {
+            HStack {
                 Text("출발 예정일")
                     .font(.appBold(size: 15))
+
+                Spacer()
 
                 DatePicker(
                     "",
