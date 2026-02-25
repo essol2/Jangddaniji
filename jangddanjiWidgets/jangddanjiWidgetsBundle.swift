@@ -12,7 +12,6 @@ import SwiftUI
 struct jangddanjiWidgetsBundle: WidgetBundle {
     var body: some Widget {
         jangddanjiWidgets()
-        jangddanjiWidgetsControl()
         WalkingLiveActivity()
     }
 }
