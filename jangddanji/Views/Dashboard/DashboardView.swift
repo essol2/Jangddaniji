@@ -43,7 +43,7 @@ private struct DashboardContentView: View {
     @State private var selectedDayRoute: DayRoute?
     @State private var showStopAlert = false
     @State private var showCelebration = false
-    @StateObject private var adManager = NativeAdManager()
+    // [AD-DISABLED] @StateObject private var adManager = NativeAdManager()
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -85,7 +85,7 @@ private struct DashboardContentView: View {
             viewModel.updateStatuses(context: modelContext)
             pedometer.setPeriodStart(journey.startDate)
             pedometer.requestAuthorization()
-            adManager.loadAd()
+            // [AD-DISABLED] adManager.loadAd()
             // Live Activity: 오늘 구간이 있고 활동이 실행 중이 아니면 시작
             let todayRoute = viewModel.todayRoute
             print("[LiveActivity] todayRoute: \(todayRoute?.startLocationName ?? "nil"), status: \(todayRoute?.status.rawValue ?? "nil"), isActive: \(LiveActivityManager.shared.isActivityActive)")
@@ -563,10 +563,10 @@ private struct DashboardContentView: View {
                         }
                 }
 
-                // Native Ad
-                if let nativeAd = adManager.nativeAd {
-                    NativeAdCardView(nativeAd: nativeAd)
-                }
+                // [AD-DISABLED] Native Ad
+                // if let nativeAd = adManager.nativeAd {
+                //     NativeAdCardView(nativeAd: nativeAd)
+                // }
             }
         }
     }

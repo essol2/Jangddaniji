@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		A14E11272F4E7CA4004C60DE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A14E11262F4E7CA4004C60DE /* WidgetKit.framework */; };
 		A14E11292F4E7CA4004C60DE /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A14E11282F4E7CA4004C60DE /* SwiftUI.framework */; };
-		A1F8BC7E2F4DF46100608D84 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = A1AD000000000002 /* GoogleMobileAds */; };
 		CAFE00012F4E0001004C60DE /* jangddanjiWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A14E11242F4E7CA4004C60DE /* jangddanjiWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -111,7 +110,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1F8BC7E2F4DF46100608D84 /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -195,7 +193,6 @@
 			);
 			name = jangddanji;
 			packageProductDependencies = (
-				A1AD000000000002 /* GoogleMobileAds */,
 			);
 			productName = jangddanji;
 			productReference = A14E0E702F4D8511004C60DE /* jangddanji.app */;
@@ -310,7 +307,6 @@
 			mainGroup = A14E0E672F4D8511004C60DE;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A1AD000000000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A14E0E712F4D8511004C60DE /* Products */;
@@ -803,24 +799,7 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		A1AD000000000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		A1AD000000000002 /* GoogleMobileAds */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1AD000000000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
-		};
-/* End XCSwiftPackageProductDependency section */
+/* [AD-DISABLED] XCRemoteSwiftPackageReference and XCSwiftPackageProductDependency for GoogleMobileAds removed */
 	};
 	rootObject = A14E0E682F4D8511004C60DE /* Project object */;
 }

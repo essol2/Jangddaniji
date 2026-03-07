@@ -1,3 +1,7 @@
+// [AD-DISABLED] 광고 없이 배포하기 위해 전체 주석 처리
+// 광고 재활성화 시 아래 주석을 해제하세요
+
+/*
 import SwiftUI
 import GoogleMobileAds
 
@@ -134,3 +138,4 @@ private class PaddedLabel: UILabel {
         return CGSize(width: size.width + 12, height: size.height + 4)
     }
 }
+*/
