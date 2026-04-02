@@ -798,8 +798,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* [AD-DISABLED] XCRemoteSwiftPackageReference and XCSwiftPackageProductDependency for GoogleMobileAds removed */
 	};
 	rootObject = A14E0E682F4D8511004C60DE /* Project object */;
 }

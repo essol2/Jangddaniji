@@ -21,7 +21,7 @@ final class RouteModifyViewModel {
 
     init(
         dayRoute: DayRoute,
-        locationService: LocationSearchServiceProtocol = AppleLocationSearchService(),
+        locationService: LocationSearchServiceProtocol = NaverLocationSearchService(),
         routeService: RouteCalculationServiceProtocol = AppleRouteCalculationService(),
         splittingService: RouteSplittingService = RouteSplittingService()
     ) {
