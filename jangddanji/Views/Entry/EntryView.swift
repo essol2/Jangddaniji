@@ -113,6 +113,22 @@ struct EntryView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }
+
+                    Button {
+                        router.navigateTo(.backup)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "icloud.fill")
+                                .font(.appRegular(size: 18))
+                            Text("iCloud 백업")
+                                .font(.appBold(size: 17))
+                        }
+                        .foregroundStyle(.white.opacity(0.8))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(.white.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
                 }
                 .padding(.horizontal, 40)
 

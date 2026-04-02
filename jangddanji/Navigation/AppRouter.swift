@@ -9,6 +9,7 @@ enum AppDestination: Hashable {
     case archiveList
     case archiveDetail(journeyID: UUID)
     case journeyComplete(journeyID: UUID)
+    case backup
 }
 
 @Observable

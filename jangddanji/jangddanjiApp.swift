@@ -9,51 +9,48 @@ struct jangddanjiApp: App {
 //        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = ["829618ddb23b6e54fc796f1fba9b701f"]
 //    }
 
-    var sharedModelContainer: ModelContainer = {
+    private let sharedModelContainer: ModelContainer?
+    @State private var databaseError: String?
+    @State private var router = AppRouter()
+
+    init() {
         let schema = Schema([
             Journey.self,
             DayRoute.self,
             JournalEntry.self,
             JournalPhoto.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .none)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            self.sharedModelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            // 개발 중 스키마 변경 시 기존 스토어 삭제 후 재생성
-            let url = modelConfiguration.url
-            try? FileManager.default.removeItem(at: url)
-            // WAL, SHM 파일도 삭제
-            try? FileManager.default.removeItem(at: url.appendingPathExtension("wal"))
-            try? FileManager.default.removeItem(at: url.appendingPathExtension("shm"))
-            do {
-                return try ModelContainer(for: schema, configurations: [modelConfiguration])
-            } catch {
-                fatalError("Could not create ModelContainer: \(error)")
-            }
+            self.sharedModelContainer = nil
+            self._databaseError = State(initialValue: "데이터베이스를 열 수 없습니다: \(error.localizedDescription)")
         }
-    }()
-
-    @State private var router = AppRouter()
+    }
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack(path: $router.path) {
-                EntryView()
-                    .navigationDestination(for: AppDestination.self) { destination in
-                        destinationView(for: destination)
-                    }
+            if let container = sharedModelContainer {
+                NavigationStack(path: $router.path) {
+                    EntryView()
+                        .navigationDestination(for: AppDestination.self) { destination in
+                            destinationView(for: destination)
+                        }
+                }
+                .environment(router)
+                .modelContainer(container)
+                .task {
+                    migratePhotoDataIfNeeded()
+                }
+                // [AD-DISABLED] .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                //     requestTrackingPermission()
+                // }
+            } else {
+                DatabaseErrorView(errorMessage: databaseError ?? "알 수 없는 오류")
             }
-            .environment(router)
-            .task {
-                migratePhotoDataIfNeeded()
-            }
-            // [AD-DISABLED] .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            //     requestTrackingPermission()
-            // }
         }
-        .modelContainer(sharedModelContainer)
     }
 
     // [AD-DISABLED] private func requestTrackingPermission() {
@@ -65,7 +62,8 @@ struct jangddanjiApp: App {
     // }
 
     private func migratePhotoDataIfNeeded() {
-        let context = sharedModelContainer.mainContext
+        guard let container = sharedModelContainer else { return }
+        let context = container.mainContext
         let descriptor = FetchDescriptor<JournalEntry>()
         guard let entries = try? context.fetch(descriptor) else { return }
 
@@ -102,6 +100,8 @@ struct jangddanjiApp: App {
             JourneyArchiveDetailView(journeyID: id)
         case .journeyComplete(let id):
             JourneyCompleteView(journeyID: id)
+        case .backup:
+            BackupView()
         }
     }
 }
