@@ -54,10 +54,16 @@ struct PlanningContainerView: View {
             // Content
             Group {
                 switch viewModel.currentStep {
+                case .routeSource:
+                    PlanningRouteSourceView(viewModel: viewModel)
                 case .startLocation:
                     PlanningStartLocationView(viewModel: viewModel)
                 case .endLocation:
                     PlanningEndLocationView(viewModel: viewModel)
+                case .waypoints:
+                    PlanningWaypointsView(viewModel: viewModel)
+                case .gpxImport:
+                    PlanningGPXImportView(viewModel: viewModel)
                 case .modeSelection:
                     PlanningModeSelectionView(viewModel: viewModel)
                 case .schedule:
@@ -73,7 +79,7 @@ struct PlanningContainerView: View {
 
             // Bottom buttons
             HStack(spacing: 12) {
-                if viewModel.currentStep != .startLocation {
+                if viewModel.currentStep != .routeSource {
                     Button {
                         viewModel.goBack()
                     } label: {

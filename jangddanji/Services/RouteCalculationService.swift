@@ -26,6 +26,10 @@ protocol RouteCalculationServiceProtocol {
         from: CLLocationCoordinate2D,
         to: CLLocationCoordinate2D
     ) async throws -> RouteResult
+
+    func calculateWalkingRoute(
+        through coordinates: [CLLocationCoordinate2D]
+    ) async throws -> RouteResult
 }
 
 final class AppleRouteCalculationService: RouteCalculationServiceProtocol {
@@ -57,6 +61,45 @@ final class AppleRouteCalculationService: RouteCalculationServiceProtocol {
             totalDistance: route.distance,
             polylinePoints: coordinates,
             expectedTravelTime: route.expectedTravelTime
+        )
+    }
+
+    @available(iOS, deprecated: 26.0)
+    func calculateWalkingRoute(
+        through coordinates: [CLLocationCoordinate2D]
+    ) async throws -> RouteResult {
+        guard coordinates.count >= 2 else {
+            throw RouteCalculationError.noRouteFound
+        }
+
+        if coordinates.count == 2 {
+            return try await calculateWalkingRoute(from: coordinates[0], to: coordinates[1])
+        }
+
+        var allPolylinePoints: [CLLocationCoordinate2D] = []
+        var totalDistance: Double = 0
+        var totalTime: TimeInterval = 0
+
+        for i in 0..<(coordinates.count - 1) {
+            let segmentResult = try await calculateWalkingRoute(
+                from: coordinates[i],
+                to: coordinates[i + 1]
+            )
+
+            if i > 0 && !allPolylinePoints.isEmpty {
+                allPolylinePoints.append(contentsOf: segmentResult.polylinePoints.dropFirst())
+            } else {
+                allPolylinePoints.append(contentsOf: segmentResult.polylinePoints)
+            }
+
+            totalDistance += segmentResult.totalDistance
+            totalTime += segmentResult.expectedTravelTime
+        }
+
+        return RouteResult(
+            totalDistance: totalDistance,
+            polylinePoints: allPolylinePoints,
+            expectedTravelTime: totalTime
         )
     }
 }
