@@ -46,6 +46,7 @@ final class PlanningViewModel {
     var startLocation: LocationResult?
     var endLocation: LocationResult?
     var waypoints: [LocationResult] = []
+    var isRoundTrip: Bool = false
     var startDate: Date = Date()
     var endDate: Date = Calendar.current.date(byAdding: .day, value: 13, to: Date()) ?? Date()
     var dailyDistanceKm: Double = 30
@@ -59,13 +60,22 @@ final class PlanningViewModel {
     var gpxResult: GPXParseResult?
     var gpxFileName: String?
 
+    /// 경로 계산에 사용할 전체 지점 목록 (출발지 → 경유지들 → 도착지)
+    var allRoutePoints: [LocationResult] {
+        var points: [LocationResult] = []
+        if let start = startLocation { points.append(start) }
+        points.append(contentsOf: waypoints)
+        if let end = endLocation { points.append(end) }
+        return points
+    }
+
     private let locationService: LocationSearchServiceProtocol
     private let routeService: RouteCalculationServiceProtocol
     private let splittingService: RouteSplittingService
     private let gpxParser: GPXParserService
 
     init(
-        locationService: LocationSearchServiceProtocol = AppleLocationSearchService(),
+        locationService: LocationSearchServiceProtocol = NaverLocationSearchService(),
         routeService: RouteCalculationServiceProtocol = AppleRouteCalculationService(),
         splittingService: RouteSplittingService = RouteSplittingService(),
         gpxParser: GPXParserService = GPXParserService()
@@ -116,7 +126,11 @@ final class PlanningViewModel {
         switch currentStep {
         case .routeSource: return routeSource != nil
         case .startLocation: return startLocation != nil
-        case .endLocation: return endLocation != nil
+        case .endLocation:
+            if isRoundTrip {
+                return !waypoints.isEmpty
+            }
+            return endLocation != nil
         case .waypoints: return true  // 선택사항
         case .gpxImport: return gpxResult != nil
         case .modeSelection: return planningMode != nil
@@ -212,19 +226,34 @@ final class PlanningViewModel {
                 }
 
             case .manual, .none:
-                guard let start = startLocation, let end = endLocation else { return }
+                let points = allRoutePoints
+                guard points.count >= 2 else { return }
 
-                if waypoints.isEmpty {
-                    result = try await routeService.calculateWalkingRoute(
-                        from: start.coordinate,
-                        to: end.coordinate
+                // 다구간 경로 계산: 각 인접 구간의 폴리라인과 거리를 합산
+                var allPolyline: [CLLocationCoordinate2D] = []
+                var totalDistance: Double = 0
+                var totalTravelTime: TimeInterval = 0
+
+                for i in 0..<(points.count - 1) {
+                    let legResult = try await routeService.calculateWalkingRoute(
+                        from: points[i].coordinate,
+                        to: points[i + 1].coordinate
                     )
-                } else {
-                    var allCoords = [start.coordinate]
-                    allCoords.append(contentsOf: waypoints.map { $0.coordinate })
-                    allCoords.append(end.coordinate)
-                    result = try await routeService.calculateWalkingRoute(through: allCoords)
+                    // 첫 구간이 아닌 경우 중복 시작점 제거
+                    if !allPolyline.isEmpty {
+                        allPolyline.append(contentsOf: legResult.polylinePoints.dropFirst())
+                    } else {
+                        allPolyline.append(contentsOf: legResult.polylinePoints)
+                    }
+                    totalDistance += legResult.totalDistance
+                    totalTravelTime += legResult.expectedTravelTime
                 }
+
+                result = RouteResult(
+                    totalDistance: totalDistance,
+                    polylinePoints: allPolyline,
+                    expectedTravelTime: totalTravelTime
+                )
             }
 
             routeResult = result
@@ -233,10 +262,9 @@ final class PlanningViewModel {
             let days: Int
             switch planningMode {
             case .byDuration, .none:
-                days = numberOfDays  // 날짜 범위에서 계산 (기존 로직)
+                days = numberOfDays
             case .byDistance:
                 days = max(Int(ceil(result.totalDistance / (dailyDistanceKm * 1000))), 1)
-                // Mode B: endDate 자동 계산
                 endDate = Calendar.current.date(byAdding: .day, value: days - 1, to: startDate) ?? startDate
             }
 
@@ -248,20 +276,23 @@ final class PlanningViewModel {
             daySegments = segments
 
             // Reverse geocode segment endpoints
+            let points = allRoutePoints
+            let firstPoint = points.first!
+            let lastPoint = points.last!
             var names: [(start: String, end: String)] = []
             for segment in segments {
                 let startName: String
                 let endName: String
 
                 if segment.dayNumber == 1 {
-                    startName = startLocation?.name ?? "출발"
+                    startName = firstPoint.name
                 } else {
                     startName = await splittingService.reverseGeocode(coordinate: segment.startCoordinate)
                     try? await Task.sleep(for: .milliseconds(300))
                 }
 
                 if segment.dayNumber == segments.count {
-                    endName = endLocation?.name ?? "도착"
+                    endName = lastPoint.name
                 } else {
                     endName = await splittingService.reverseGeocode(coordinate: segment.endCoordinate)
                     try? await Task.sleep(for: .milliseconds(300))
@@ -280,7 +311,16 @@ final class PlanningViewModel {
     // MARK: - 여정 생성
 
     func createJourney(in context: ModelContext) -> Journey {
-        let title = "\(startLocation?.name ?? "") → \(endLocation?.name ?? "")"
+        let title: String
+        if isRoundTrip {
+            let waypointNames = waypoints.map(\.name).joined(separator: " → ")
+            title = "\(startLocation?.name ?? "") → \(waypointNames) → \(startLocation?.name ?? "")"
+        } else if waypoints.isEmpty {
+            title = "\(startLocation?.name ?? "") → \(endLocation?.name ?? "")"
+        } else {
+            let waypointNames = waypoints.map(\.name).joined(separator: " → ")
+            title = "\(startLocation?.name ?? "") → \(waypointNames) → \(endLocation?.name ?? "")"
+        }
         let journey = Journey(
             title: title,
             startLocationName: startLocation?.name ?? "",

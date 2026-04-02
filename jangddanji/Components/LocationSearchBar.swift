@@ -10,7 +10,7 @@ struct LocationSearchBar: View {
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
 
-    private let searchService = AppleLocationSearchService()
+    private let searchService: LocationSearchServiceProtocol = NaverLocationSearchService()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
