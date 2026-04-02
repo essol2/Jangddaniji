@@ -26,6 +26,14 @@ protocol LocationSearchServiceProtocol {
 }
 
 final class AppleLocationSearchService: LocationSearchServiceProtocol {
+    // 한국 영역 경계 (위도/경도)
+    private static let koreaLatRange = 33.0...39.0
+    private static let koreaLonRange = 124.0...132.0
+
+    private static func isInKorea(_ coordinate: CLLocationCoordinate2D) -> Bool {
+        koreaLatRange.contains(coordinate.latitude) && koreaLonRange.contains(coordinate.longitude)
+    }
+
     @available(iOS, deprecated: 26.0)
     func search(query: String) async throws -> [LocationResult] {
         let request = MKLocalSearch.Request()
@@ -42,6 +50,8 @@ final class AppleLocationSearchService: LocationSearchServiceProtocol {
         return response.mapItems.compactMap { item -> LocationResult? in
             let coord = item.placemark.coordinate
             guard CLLocationCoordinate2DIsValid(coord) else { return nil }
+            // 한국 영역 밖의 결과는 제외
+            guard Self.isInKorea(coord) else { return nil }
             return LocationResult(
                 name: item.name ?? "알 수 없는 위치",
                 subtitle: item.placemark.title ?? "",

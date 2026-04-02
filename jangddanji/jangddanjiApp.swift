@@ -1,13 +1,13 @@
 import SwiftUI
 import SwiftData
-import GoogleMobileAds
-import AppTrackingTransparency
+// [AD-DISABLED] import GoogleMobileAds
+// [AD-DISABLED] import AppTrackingTransparency
 
 @main
 struct jangddanjiApp: App {
-    init() {
-        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = ["829618ddb23b6e54fc796f1fba9b701f"]
-    }
+//    [AD-DISABLED] init() {
+//        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = ["829618ddb23b6e54fc796f1fba9b701f"]
+//    }
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -49,20 +49,20 @@ struct jangddanjiApp: App {
             .task {
                 migratePhotoDataIfNeeded()
             }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                requestTrackingPermission()
-            }
+            // [AD-DISABLED] .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            //     requestTrackingPermission()
+            // }
         }
         .modelContainer(sharedModelContainer)
     }
 
-    private func requestTrackingPermission() {
-        ATTrackingManager.requestTrackingAuthorization { status in
-            // ATT 응답 후 AdMob 초기화 (허용/거부 상관없이)
-            GADMobileAds.sharedInstance().start(completionHandler: nil)
-            InterstitialAdManager.shared.loadAd()
-        }
-    }
+    // [AD-DISABLED] private func requestTrackingPermission() {
+    //     ATTrackingManager.requestTrackingAuthorization { status in
+    //         // ATT 응답 후 AdMob 초기화 (허용/거부 상관없이)
+    //         GADMobileAds.sharedInstance().start(completionHandler: nil)
+    //         InterstitialAdManager.shared.loadAd()
+    //     }
+    // }
 
     private func migratePhotoDataIfNeeded() {
         let context = sharedModelContainer.mainContext

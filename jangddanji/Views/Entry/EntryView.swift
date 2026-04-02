@@ -9,7 +9,7 @@ struct EntryView: View {
     @Query(filter: #Predicate<Journey> { $0.statusRawValue == "completed" })
     private var completedJourneys: [Journey]
 
-    private var interstitialAd = InterstitialAdManager.shared
+    // [AD-DISABLED] private var interstitialAd = InterstitialAdManager.shared
 
     var body: some View {
         ZStack {
@@ -56,13 +56,13 @@ struct EntryView: View {
                 VStack(spacing: 12) {
                     if !activeJourneys.isEmpty {
                         Button {
-                            if Double.random(in: 0..<1) < 0.2 {
-                                interstitialAd.tryShowAd {
-                                    router.navigateTo(.dashboard)
-                                }
-                            } else {
+                            // [AD-DISABLED] if Double.random(in: 0..<1) < 0.2 {
+                            //     interstitialAd.tryShowAd {
+                            //         router.navigateTo(.dashboard)
+                            //     }
+                            // } else {
                                 router.navigateTo(.dashboard)
-                            }
+                            // }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "figure.walk.circle.fill")
@@ -78,9 +78,9 @@ struct EntryView: View {
                         }
                     } else {
                         Button {
-                            interstitialAd.tryShowAd {
+                            // [AD-DISABLED] interstitialAd.tryShowAd {
                                 router.navigateTo(.planning)
-                            }
+                            // }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "mappin.circle.fill")
