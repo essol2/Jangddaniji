@@ -224,7 +224,8 @@ private struct DayDetailContentView: View {
     private var mapSection: some View {
         MapSnippetView(
             startCoordinate: viewModel.startCoordinate,
-            endCoordinate: viewModel.endCoordinate
+            endCoordinate: viewModel.endCoordinate,
+            waypoints: viewModel.waypoints
         )
         .frame(height: 180)
     }

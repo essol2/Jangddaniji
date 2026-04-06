@@ -119,8 +119,8 @@ struct PlanningEndLocationView: View {
             ForEach(Array(viewModel.waypoints.enumerated()), id: \.offset) { index, waypoint in
                 waypointRow(waypoint: waypoint, index: index)
 
-                // 경유지 사이 추가 버튼
-                if waypointSearchIndex == index + 1 {
+                // 경유지 사이 추가 버튼 (끝에 추가하는 경우는 아래에서 처리)
+                if waypointSearchIndex == index + 1 && waypointSearchIndex != viewModel.waypoints.count {
                     waypointSearchBar(insertIndex: index + 1)
                 }
             }

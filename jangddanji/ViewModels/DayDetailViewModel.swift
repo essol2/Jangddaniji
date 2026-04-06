@@ -21,6 +21,10 @@ final class DayDetailViewModel {
         CLLocationCoordinate2D(latitude: dayRoute.endLatitude, longitude: dayRoute.endLongitude)
     }
 
+    var waypoints: [WaypointCoordinate] {
+        dayRoute.waypointCoordinates
+    }
+
     var initialText: String {
         dayRoute.journalEntry?.text ?? ""
     }

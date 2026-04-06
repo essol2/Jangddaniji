@@ -304,7 +304,8 @@ final class PlanningViewModel {
                     numberOfDays: days
                 )
             }
-            daySegments = segments
+            // 각 세그먼트에 해당하는 경유지 배정
+            daySegments = Self.assignWaypoints(to: segments, waypoints: waypoints)
 
             // Reverse geocode segment endpoints
             if splittingStrategy == .byCourse, let gpx = gpxResult, !gpx.courses.isEmpty {
@@ -410,7 +411,8 @@ final class PlanningViewModel {
                 endLocationName: names.end,
                 endLatitude: segment.endCoordinate.latitude,
                 endLongitude: segment.endCoordinate.longitude,
-                distance: segment.distance
+                distance: segment.distance,
+                waypoints: segment.waypoints
             )
 
             if Calendar.current.isDateInToday(date) {
@@ -423,5 +425,38 @@ final class PlanningViewModel {
 
         try? context.save()
         return journey
+    }
+
+    // MARK: - 경유지를 세그먼트에 배정
+
+    /// 각 경유지 좌표가 어느 세그먼트 구간에 가장 가까운지 판별하여 배정
+    private static func assignWaypoints(to segments: [DaySegment], waypoints: [LocationResult]) -> [DaySegment] {
+        guard !waypoints.isEmpty else { return segments }
+
+        var result = segments
+
+        for wp in waypoints {
+            let wpLocation = CLLocation(latitude: wp.latitude, longitude: wp.longitude)
+            var bestIndex = 0
+            var bestDistance = Double.greatestFiniteMagnitude
+
+            for (i, seg) in segments.enumerated() {
+                // 세그먼트 시작/끝 중심점까지의 거리로 판별
+                let midLat = (seg.startCoordinate.latitude + seg.endCoordinate.latitude) / 2
+                let midLon = (seg.startCoordinate.longitude + seg.endCoordinate.longitude) / 2
+                let midLocation = CLLocation(latitude: midLat, longitude: midLon)
+                let dist = wpLocation.distance(from: midLocation)
+                if dist < bestDistance {
+                    bestDistance = dist
+                    bestIndex = i
+                }
+            }
+
+            result[bestIndex].waypoints.append(
+                WaypointCoordinate(name: wp.name, latitude: wp.latitude, longitude: wp.longitude)
+            )
+        }
+
+        return result
     }
 }

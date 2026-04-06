@@ -17,6 +17,9 @@ final class DayRoute {
 
     var distance: Double
 
+    /// 경유지 좌표 목록 (JSON: [[lat, lon], ...])
+    var waypointsData: Data?
+
     var statusRawValue: String
     var status: DayRouteStatus {
         get { DayRouteStatus(rawValue: statusRawValue) ?? .upcoming }
@@ -37,7 +40,8 @@ final class DayRoute {
         endLocationName: String,
         endLatitude: Double,
         endLongitude: Double,
-        distance: Double
+        distance: Double,
+        waypoints: [WaypointCoordinate] = []
     ) {
         self.id = UUID()
         self.dayNumber = dayNumber
@@ -50,5 +54,19 @@ final class DayRoute {
         self.endLongitude = endLongitude
         self.distance = distance
         self.statusRawValue = DayRouteStatus.upcoming.rawValue
+        self.waypointsData = try? JSONEncoder().encode(waypoints)
     }
+
+    /// 경유지 좌표 배열 (디코딩)
+    var waypointCoordinates: [WaypointCoordinate] {
+        guard let data = waypointsData else { return [] }
+        return (try? JSONDecoder().decode([WaypointCoordinate].self, from: data)) ?? []
+    }
+}
+
+/// 경유지 좌표를 JSON으로 저장하기 위한 경량 모델
+struct WaypointCoordinate: Codable {
+    let name: String
+    let latitude: Double
+    let longitude: Double
 }

@@ -6,6 +6,7 @@ struct DaySegment {
     let startCoordinate: CLLocationCoordinate2D
     let endCoordinate: CLLocationCoordinate2D
     let distance: Double
+    var waypoints: [WaypointCoordinate] = []
 }
 
 protocol RouteSplittingServiceProtocol {

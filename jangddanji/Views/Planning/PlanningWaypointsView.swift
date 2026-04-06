@@ -2,40 +2,20 @@ import SwiftUI
 
 struct PlanningWaypointsView: View {
     @Bindable var viewModel: PlanningViewModel
-    @State private var newWaypoint: LocationResult?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("경유지 추가")
+                    Text("경로 확인")
                         .font(.appBold(size: 18))
-                    Text("경유하고 싶은 지점을 추가하세요 (선택사항)")
+                    Text("최종적으로 이 경로가 맞나요?")
                         .font(.appRegular(size: 14))
                         .foregroundStyle(AppColors.textSecondary)
                 }
 
                 // 경로 요약
                 routeSummarySection
-
-                // 경유지 추가
-                if viewModel.waypoints.count < 5 {
-                    LocationSearchBar(
-                        placeholder: "경유지를 검색하세요",
-                        selectedLocation: $newWaypoint
-                    )
-                    .onChange(of: newWaypoint) { _, location in
-                        if let location {
-                            viewModel.waypoints.append(location)
-                            newWaypoint = nil
-                        }
-                    }
-                } else {
-                    Text("경유지는 최대 5개까지 추가할 수 있습니다")
-                        .font(.appRegular(size: 13))
-                        .foregroundStyle(AppColors.textSecondary)
-                        .padding(.vertical, 8)
-                }
 
                 Spacer()
             }
@@ -51,8 +31,7 @@ struct PlanningWaypointsView: View {
                 icon: "flag.fill",
                 color: AppColors.primaryBlueDark,
                 name: viewModel.startLocation?.name ?? "",
-                subtitle: "출발지",
-                isRemovable: false
+                subtitle: "출발지"
             )
 
             // 경유지들
@@ -62,9 +41,7 @@ struct PlanningWaypointsView: View {
                     icon: "\(index + 1).circle.fill",
                     color: .orange,
                     name: wp.name,
-                    subtitle: "경유지 \(index + 1)",
-                    isRemovable: true,
-                    onRemove: { viewModel.waypoints.remove(at: index) }
+                    subtitle: "경유지 \(index + 1)"
                 )
             }
 
@@ -75,8 +52,7 @@ struct PlanningWaypointsView: View {
                 icon: "flag.checkered",
                 color: .red,
                 name: viewModel.endLocation?.name ?? "",
-                subtitle: "목적지",
-                isRemovable: false
+                subtitle: "목적지"
             )
         }
         .padding(16)
@@ -99,9 +75,7 @@ struct PlanningWaypointsView: View {
         icon: String,
         color: Color,
         name: String,
-        subtitle: String,
-        isRemovable: Bool,
-        onRemove: (() -> Void)? = nil
+        subtitle: String
     ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
@@ -120,19 +94,6 @@ struct PlanningWaypointsView: View {
             }
 
             Spacer()
-
-            if isRemovable {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        onRemove?()
-                    }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(AppColors.textSecondary.opacity(0.5))
-                        .font(.appRegular(size: 18))
-                }
-                .buttonStyle(.plain)
-            }
         }
     }
 }
