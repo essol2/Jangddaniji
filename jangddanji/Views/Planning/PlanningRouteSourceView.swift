@@ -22,11 +22,11 @@ struct PlanningRouteSourceView: View {
             )
 
             sourceCard(
-                source: .gpxImport,
-                icon: "doc.badge.arrow.up",
-                title: "GPX 파일 가져오기",
-                description: "미리 만들어둔 GPX 파일로\n경로를 불러옵니다",
-                isSelected: viewModel.routeSource == .gpxImport
+                source: .presetRoute,
+                icon: "map.fill",
+                title: "유명 경로 불러오기",
+                description: "제주올레길, 자전거길 등\n유명 경로를 바로 불러옵니다",
+                isSelected: viewModel.routeSource == .presetRoute
             )
 
             Spacer()

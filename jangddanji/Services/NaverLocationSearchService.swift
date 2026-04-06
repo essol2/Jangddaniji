@@ -56,12 +56,23 @@ final class NaverLocationSearchService: LocationSearchServiceProtocol {
 
     func search(query: String) async throws -> [LocationResult] {
         guard !clientId.isEmpty, !clientSecret.isEmpty else {
+            print("⚠️ [NaverSearch] API 키 누락 → Apple 폴백 사용")
+            print("  - clientId 비어있음: \(clientId.isEmpty)")
+            print("  - clientSecret 비어있음: \(clientSecret.isEmpty)")
             return try await fallback.search(query: query)
         }
 
         do {
-            return try await naverSearch(query: query)
+            let results = try await naverSearch(query: query)
+            print("✅ [NaverSearch] '\(query)' → \(results.count)건 검색됨")
+            return results
         } catch {
+            print("❌ [NaverSearch] 실패 → Apple 폴백 사용")
+            print("  - query: \(query)")
+            print("  - error: \(error)")
+            if let naverError = error as? NaverSearchError {
+                print("  - NaverSearchError: \(naverError.errorDescription ?? "unknown")")
+            }
             return try await fallback.search(query: query)
         }
     }

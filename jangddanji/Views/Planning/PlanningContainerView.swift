@@ -62,8 +62,8 @@ struct PlanningContainerView: View {
                     PlanningEndLocationView(viewModel: viewModel)
                 case .waypoints:
                     PlanningWaypointsView(viewModel: viewModel)
-                case .gpxImport:
-                    PlanningGPXImportView(viewModel: viewModel)
+                case .presetRoute:
+                    PlanningPresetRouteView(viewModel: viewModel)
                 case .modeSelection:
                     PlanningModeSelectionView(viewModel: viewModel)
                 case .schedule:

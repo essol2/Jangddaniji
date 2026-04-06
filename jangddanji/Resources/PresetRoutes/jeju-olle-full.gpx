@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="jangddanji"
+     xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>제주올레길 전체코스</name>
+
+    <trkseg>
+      <name>1코스 시흥~광치기</name>
+      <trkpt lat="33.5066" lon="126.4929"/>
+      <trkpt lat="33.4800" lon="126.5400"/>
+      <trkpt lat="33.4561" lon="126.9231"/>
+    </trkseg>
+
+    <trkseg>
+      <name>2코스 광치기~온평</name>
+      <trkpt lat="33.4561" lon="126.9231"/>
+      <trkpt lat="33.4580" lon="126.9280"/>
+      <trkpt lat="33.4600" lon="126.9320"/>
+    </trkseg>
+
+    <trkseg>
+      <name>3코스 온평~표선</name>
+      <trkpt lat="33.4600" lon="126.9320"/>
+      <trkpt lat="33.4530" lon="126.9200"/>
+      <trkpt lat="33.4475" lon="126.9072"/>
+    </trkseg>
+
+    <trkseg>
+      <name>4코스 표선~남원</name>
+      <trkpt lat="33.4475" lon="126.9072"/>
+      <trkpt lat="33.3870" lon="126.8740"/>
+      <trkpt lat="33.3270" lon="126.8410"/>
+    </trkseg>
+
+    <trkseg>
+      <name>5코스 남원~쇠소깍</name>
+      <trkpt lat="33.3270" lon="126.8410"/>
+      <trkpt lat="33.2990" lon="126.7780"/>
+      <trkpt lat="33.2710" lon="126.7160"/>
+    </trkseg>
+
+    <trkseg>
+      <name>6코스 쇠소깍~외돌개</name>
+      <trkpt lat="33.2710" lon="126.7160"/>
+      <trkpt lat="33.2600" lon="126.6690"/>
+      <trkpt lat="33.2490" lon="126.6230"/>
+    </trkseg>
+
+    <trkseg>
+      <name>7코스 외돌개~월평</name>
+      <trkpt lat="33.2490" lon="126.6230"/>
+      <trkpt lat="33.2440" lon="126.5670"/>
+      <trkpt lat="33.2400" lon="126.5120"/>
+    </trkseg>
+
+    <trkseg>
+      <name>8코스 월평~대평</name>
+      <trkpt lat="33.2400" lon="126.5120"/>
+      <trkpt lat="33.2430" lon="126.4610"/>
+      <trkpt lat="33.2470" lon="126.4110"/>
+    </trkseg>
+
+    <trkseg>
+      <name>9코스 대평~화순</name>
+      <trkpt lat="33.2470" lon="126.4110"/>
+      <trkpt lat="33.2430" lon="126.3720"/>
+      <trkpt lat="33.2390" lon="126.3340"/>
+    </trkseg>
+
+    <trkseg>
+      <name>10코스 화순~모슬포</name>
+      <trkpt lat="33.2390" lon="126.3340"/>
+      <trkpt lat="33.2260" lon="126.2920"/>
+      <trkpt lat="33.2130" lon="126.2510"/>
+    </trkseg>
+
+    <trkseg>
+      <name>11코스 모슬포~무릉</name>
+      <trkpt lat="33.2130" lon="126.2510"/>
+      <trkpt lat="33.2350" lon="126.2310"/>
+      <trkpt lat="33.2580" lon="126.2120"/>
+    </trkseg>
+
+    <trkseg>
+      <name>12코스 무릉~용수</name>
+      <trkpt lat="33.2580" lon="126.2120"/>
+      <trkpt lat="33.2800" lon="126.1940"/>
+      <trkpt lat="33.3020" lon="126.1770"/>
+    </trkseg>
+
+    <trkseg>
+      <name>13코스 용수~저지</name>
+      <trkpt lat="33.3020" lon="126.1770"/>
+      <trkpt lat="33.3180" lon="126.2070"/>
+      <trkpt lat="33.3340" lon="126.2370"/>
+    </trkseg>
+
+    <trkseg>
+      <name>14코스 저지~한림</name>
+      <trkpt lat="33.3340" lon="126.2370"/>
+      <trkpt lat="33.3690" lon="126.2500"/>
+      <trkpt lat="33.4040" lon="126.2630"/>
+    </trkseg>
+
+    <trkseg>
+      <name>15코스 한림~고내</name>
+      <trkpt lat="33.4040" lon="126.2630"/>
+      <trkpt lat="33.4260" lon="126.2870"/>
+      <trkpt lat="33.4480" lon="126.3120"/>
+    </trkseg>
+
+    <trkseg>
+      <name>16코스 고내~광령</name>
+      <trkpt lat="33.4480" lon="126.3120"/>
+      <trkpt lat="33.4500" lon="126.3360"/>
+      <trkpt lat="33.4530" lon="126.3610"/>
+    </trkseg>
+
+    <trkseg>
+      <name>17코스 광령~산지천</name>
+      <trkpt lat="33.4530" lon="126.3610"/>
+      <trkpt lat="33.4630" lon="126.3860"/>
+      <trkpt lat="33.4730" lon="126.4110"/>
+    </trkseg>
+
+    <trkseg>
+      <name>18코스 산지천~조천</name>
+      <trkpt lat="33.4730" lon="126.4110"/>
+      <trkpt lat="33.4970" lon="126.4400"/>
+      <trkpt lat="33.5210" lon="126.4690"/>
+    </trkseg>
+
+    <trkseg>
+      <name>19코스 조천~김녕</name>
+      <trkpt lat="33.5210" lon="126.4690"/>
+      <trkpt lat="33.5320" lon="126.5150"/>
+      <trkpt lat="33.5440" lon="126.5610"/>
+    </trkseg>
+
+    <trkseg>
+      <name>20코스 김녕~하도</name>
+      <trkpt lat="33.5440" lon="126.5610"/>
+      <trkpt lat="33.5350" lon="126.6160"/>
+      <trkpt lat="33.5260" lon="126.6720"/>
+    </trkseg>
+
+    <trkseg>
+      <name>21코스 하도~시흥</name>
+      <trkpt lat="33.5260" lon="126.6720"/>
+      <trkpt lat="33.5020" lon="126.7700"/>
+      <trkpt lat="33.4780" lon="126.8680"/>
+      <trkpt lat="33.5066" lon="126.4929"/>
+    </trkseg>
+
+  </trk>
+</gpx>

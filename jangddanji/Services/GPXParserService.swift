@@ -17,10 +17,17 @@ enum GPXParseError: LocalizedError {
     }
 }
 
+struct GPXCourse {
+    let courseName: String
+    let points: [CLLocationCoordinate2D]
+    let distance: Double
+}
+
 struct GPXParseResult {
     let polylinePoints: [CLLocationCoordinate2D]
     let totalDistance: Double
     let trackName: String?
+    let courses: [GPXCourse]
 }
 
 final class GPXParserService: NSObject, XMLParserDelegate {
@@ -30,6 +37,13 @@ final class GPXParserService: NSObject, XMLParserDelegate {
     private var currentElement = ""
     private var currentText = ""
     private var isInsideTrackOrRoute = false
+
+    // 코스별 파싱
+    private var isInsideSegment = false
+    private var currentSegmentPoints: [CLLocationCoordinate2D] = []
+    private var currentSegmentName: String?
+    private var parsedCourses: [GPXCourse] = []
+    private var segmentNameParsed = false
 
     func parseGPX(from url: URL) throws -> GPXParseResult {
         let accessing = url.startAccessingSecurityScopedResource()
@@ -47,6 +61,11 @@ final class GPXParserService: NSObject, XMLParserDelegate {
         currentElement = ""
         currentText = ""
         isInsideTrackOrRoute = false
+        isInsideSegment = false
+        currentSegmentPoints = []
+        currentSegmentName = nil
+        parsedCourses = []
+        segmentNameParsed = false
 
         let parser = XMLParser(data: data)
         parser.delegate = self
@@ -65,7 +84,8 @@ final class GPXParserService: NSObject, XMLParserDelegate {
         return GPXParseResult(
             polylinePoints: coordinates,
             totalDistance: totalDistance,
-            trackName: trackName
+            trackName: trackName,
+            courses: parsedCourses
         )
     }
 
@@ -84,6 +104,13 @@ final class GPXParserService: NSObject, XMLParserDelegate {
             isInsideTrackOrRoute = true
         }
 
+        if elementName == "trkseg" || elementName == "rteseg" {
+            isInsideSegment = true
+            currentSegmentPoints = []
+            currentSegmentName = nil
+            segmentNameParsed = false
+        }
+
         if elementName == "trkpt" || elementName == "rtept" {
             guard let latStr = attributeDict["lat"],
                   let lonStr = attributeDict["lon"],
@@ -93,12 +120,16 @@ final class GPXParserService: NSObject, XMLParserDelegate {
                   (-180...180).contains(lon) else {
                 return
             }
-            coordinates.append(CLLocationCoordinate2D(latitude: lat, longitude: lon))
+            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            coordinates.append(coord)
+            if isInsideSegment {
+                currentSegmentPoints.append(coord)
+            }
         }
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        if currentElement == "name" && isInsideTrackOrRoute && trackName == nil {
+        if currentElement == "name" {
             currentText += string
         }
     }
@@ -109,11 +140,29 @@ final class GPXParserService: NSObject, XMLParserDelegate {
         namespaceURI: String?,
         qualifiedName qName: String?
     ) {
-        if elementName == "name" && isInsideTrackOrRoute && trackName == nil {
+        if elementName == "name" {
             let trimmed = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty {
-                trackName = trimmed
+                if isInsideSegment && !segmentNameParsed {
+                    currentSegmentName = trimmed
+                    segmentNameParsed = true
+                } else if isInsideTrackOrRoute && trackName == nil {
+                    trackName = trimmed
+                }
             }
+        }
+
+        if elementName == "trkseg" || elementName == "rteseg" {
+            if currentSegmentPoints.count >= 2 {
+                let distance = calculateTotalDistance(currentSegmentPoints)
+                let course = GPXCourse(
+                    courseName: currentSegmentName ?? "\(parsedCourses.count + 1)코스",
+                    points: currentSegmentPoints,
+                    distance: distance
+                )
+                parsedCourses.append(course)
+            }
+            isInsideSegment = false
         }
 
         if elementName == "trk" || elementName == "rte" {

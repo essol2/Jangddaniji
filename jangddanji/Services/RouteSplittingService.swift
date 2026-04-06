@@ -104,6 +104,17 @@ final class RouteSplittingService: RouteSplittingServiceProtocol {
         return segments
     }
 
+    func splitRouteByCourses(courses: [GPXCourse]) -> [DaySegment] {
+        courses.enumerated().map { index, course in
+            DaySegment(
+                dayNumber: index + 1,
+                startCoordinate: course.points.first!,
+                endCoordinate: course.points.last!,
+                distance: course.distance
+            )
+        }
+    }
+
     @available(iOS, deprecated: 26.0)
     func reverseGeocode(coordinate: CLLocationCoordinate2D) async -> String {
         let geocoder = CLGeocoder()

@@ -10,8 +10,13 @@ final class PlanningViewModel {
     }
 
     enum RouteSource {
-        case manual      // 직접 입력
-        case gpxImport   // GPX 파일 가져오기
+        case manual        // 직접 입력
+        case presetRoute   // 유명 경로 불러오기
+    }
+
+    enum SplittingStrategy {
+        case byCourse       // 코스별로 걷기
+        case equalDistance   // 날짜/거리로 나누기
     }
 
     enum Step: Hashable, CaseIterable {
@@ -19,7 +24,7 @@ final class PlanningViewModel {
         case startLocation
         case endLocation
         case waypoints
-        case gpxImport
+        case presetRoute
         case modeSelection
         case schedule        // Mode A (byDuration) 전용
         case distance        // Mode B (byDistance) 전용
@@ -31,7 +36,7 @@ final class PlanningViewModel {
             case .startLocation: return "출발지"
             case .endLocation: return "목적지"
             case .waypoints: return "경유지"
-            case .gpxImport: return "GPX 가져오기"
+            case .presetRoute: return "경로 선택"
             case .modeSelection: return "계획 방식"
             case .schedule: return "여정 기간"
             case .distance: return "목표 거리"
@@ -56,9 +61,10 @@ final class PlanningViewModel {
     var isCalculating = false
     var errorMessage: String?
 
-    // GPX
+    // 프리셋 경로
+    var selectedPreset: PresetRoute?
     var gpxResult: GPXParseResult?
-    var gpxFileName: String?
+    var splittingStrategy: SplittingStrategy?
 
     /// 경로 계산에 사용할 전체 지점 목록 (출발지 → 경유지들 → 도착지)
     var allRoutePoints: [LocationResult] {
@@ -100,8 +106,12 @@ final class PlanningViewModel {
             steps.append(.confirm)
             return steps
 
-        case .gpxImport:
-            var steps: [Step] = [.routeSource, .gpxImport, .modeSelection]
+        case .presetRoute:
+            if splittingStrategy == .byCourse {
+                // 코스별 분할: modeSelection 스킵, 바로 일정(시작일) → 확인
+                return [.routeSource, .presetRoute, .schedule, .confirm]
+            }
+            var steps: [Step] = [.routeSource, .presetRoute, .modeSelection]
             switch planningMode {
             case .byDuration: steps.append(.schedule)
             case .byDistance: steps.append(.distance)
@@ -132,9 +142,11 @@ final class PlanningViewModel {
             }
             return endLocation != nil
         case .waypoints: return true  // 선택사항
-        case .gpxImport: return gpxResult != nil
+        case .presetRoute: return gpxResult != nil && splittingStrategy != nil
         case .modeSelection: return planningMode != nil
-        case .schedule: return endDate > startDate
+        case .schedule:
+            if splittingStrategy == .byCourse { return true }
+            return endDate > startDate
         case .distance: return dailyDistanceKm >= 5
         case .confirm: return !daySegments.isEmpty
         }
@@ -166,28 +178,39 @@ final class PlanningViewModel {
         if currentStep == .modeSelection {
             planningMode = nil
         }
+        // 프리셋 선택 단계로 돌아가면 분할 전략 초기화
+        if currentStep == .presetRoute {
+            splittingStrategy = nil
+        }
         // 경로 입력 방식 선택으로 돌아가면 전체 리셋
         if currentStep == .routeSource {
             routeSource = nil
             waypoints = []
+            selectedPreset = nil
             gpxResult = nil
-            gpxFileName = nil
+            splittingStrategy = nil
             startLocation = nil
             endLocation = nil
         }
     }
 
-    // MARK: - GPX 임포트
+    // MARK: - 프리셋 경로 불러오기
 
-    func importGPX(from url: URL) {
+    func loadPresetRoute(_ preset: PresetRoute) {
+        guard let url = preset.gpxURL else {
+            errorMessage = "경로 파일을 찾을 수 없습니다."
+            selectedPreset = nil
+            gpxResult = nil
+            return
+        }
         do {
             let result = try gpxParser.parseGPX(from: url)
+            selectedPreset = preset
             gpxResult = result
-            gpxFileName = url.lastPathComponent
             errorMessage = nil
         } catch {
+            selectedPreset = nil
             gpxResult = nil
-            gpxFileName = nil
             errorMessage = error.localizedDescription
         }
     }
@@ -202,7 +225,7 @@ final class PlanningViewModel {
             let result: RouteResult
 
             switch routeSource {
-            case .gpxImport:
+            case .presetRoute:
                 guard let gpx = gpxResult else { return }
                 result = RouteResult(
                     totalDistance: gpx.totalDistance,
@@ -258,49 +281,88 @@ final class PlanningViewModel {
 
             routeResult = result
 
-            // 모드에 따라 일수 결정
-            let days: Int
-            switch planningMode {
-            case .byDuration, .none:
-                days = numberOfDays
-            case .byDistance:
-                days = max(Int(ceil(result.totalDistance / (dailyDistanceKm * 1000))), 1)
-                endDate = Calendar.current.date(byAdding: .day, value: days - 1, to: startDate) ?? startDate
-            }
+            let segments: [DaySegment]
 
-            let segments = splittingService.splitRoute(
-                polylinePoints: result.polylinePoints,
-                totalDistance: result.totalDistance,
-                numberOfDays: days
-            )
+            if splittingStrategy == .byCourse, let gpx = gpxResult, !gpx.courses.isEmpty {
+                // 코스별 분할
+                segments = splittingService.splitRouteByCourses(courses: gpx.courses)
+                let courseCount = segments.count
+                endDate = Calendar.current.date(byAdding: .day, value: courseCount - 1, to: startDate) ?? startDate
+            } else {
+                // 균등 분할
+                let days: Int
+                switch planningMode {
+                case .byDuration, .none:
+                    days = numberOfDays
+                case .byDistance:
+                    days = max(Int(ceil(result.totalDistance / (dailyDistanceKm * 1000))), 1)
+                    endDate = Calendar.current.date(byAdding: .day, value: days - 1, to: startDate) ?? startDate
+                }
+                segments = splittingService.splitRoute(
+                    polylinePoints: result.polylinePoints,
+                    totalDistance: result.totalDistance,
+                    numberOfDays: days
+                )
+            }
             daySegments = segments
 
             // Reverse geocode segment endpoints
-            let points = allRoutePoints
-            let firstPoint = points.first!
-            let lastPoint = points.last!
-            var names: [(start: String, end: String)] = []
-            for segment in segments {
-                let startName: String
-                let endName: String
+            if splittingStrategy == .byCourse, let gpx = gpxResult, !gpx.courses.isEmpty {
+                // 코스별: 코스 이름을 그대로 사용
+                var names: [(start: String, end: String)] = []
+                for (index, course) in gpx.courses.enumerated() {
+                    let startName: String
+                    let endName: String
 
-                if segment.dayNumber == 1 {
-                    startName = firstPoint.name
-                } else {
-                    startName = await splittingService.reverseGeocode(coordinate: segment.startCoordinate)
-                    try? await Task.sleep(for: .milliseconds(300))
+                    if index == 0, let name = startLocation?.name {
+                        startName = name
+                    } else if index == 0 {
+                        startName = await splittingService.reverseGeocode(coordinate: segments[index].startCoordinate)
+                    } else {
+                        startName = await splittingService.reverseGeocode(coordinate: segments[index].startCoordinate)
+                        try? await Task.sleep(for: .milliseconds(300))
+                    }
+
+                    if index == gpx.courses.count - 1, let name = endLocation?.name {
+                        endName = name
+                    } else if index == gpx.courses.count - 1 {
+                        endName = await splittingService.reverseGeocode(coordinate: segments[index].endCoordinate)
+                    } else {
+                        endName = await splittingService.reverseGeocode(coordinate: segments[index].endCoordinate)
+                        try? await Task.sleep(for: .milliseconds(300))
+                    }
+
+                    names.append((start: startName, end: endName))
                 }
+                segmentNames = names
+            } else {
+                // 균등 분할: 기존 로직
+                let points = allRoutePoints
+                let firstPoint = points.first!
+                let lastPoint = points.last!
+                var names: [(start: String, end: String)] = []
+                for segment in segments {
+                    let startName: String
+                    let endName: String
 
-                if segment.dayNumber == segments.count {
-                    endName = lastPoint.name
-                } else {
-                    endName = await splittingService.reverseGeocode(coordinate: segment.endCoordinate)
-                    try? await Task.sleep(for: .milliseconds(300))
+                    if segment.dayNumber == 1 {
+                        startName = firstPoint.name
+                    } else {
+                        startName = await splittingService.reverseGeocode(coordinate: segment.startCoordinate)
+                        try? await Task.sleep(for: .milliseconds(300))
+                    }
+
+                    if segment.dayNumber == segments.count {
+                        endName = lastPoint.name
+                    } else {
+                        endName = await splittingService.reverseGeocode(coordinate: segment.endCoordinate)
+                        try? await Task.sleep(for: .milliseconds(300))
+                    }
+
+                    names.append((start: startName, end: endName))
                 }
-
-                names.append((start: startName, end: endName))
+                segmentNames = names
             }
-            segmentNames = names
         } catch {
             errorMessage = error.localizedDescription
         }
