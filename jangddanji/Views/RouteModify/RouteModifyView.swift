@@ -69,9 +69,16 @@ private struct RouteModifyContentView: View {
             searchQuery = dayRoute.endLocationName
             remainingDaysCount = viewModel.initialRemainingDays
         }
-        .alert("경로 재계산", isPresented: $showConfirmAlert) {
-            Button("취소", role: .cancel) {}
-            Button("수정하기") {
+        .alert("경로 수정", isPresented: $showConfirmAlert) {
+            Button("이 구간만 수정") {
+                Task {
+                    await viewModel.recalculateCurrentOnly(context: modelContext)
+                    if viewModel.errorMessage == nil {
+                        router.pop()
+                    }
+                }
+            }
+            Button("뒷 경로 재계산") {
                 Task {
                     await viewModel.recalculate(remainingDaysCount: remainingDaysCount, context: modelContext)
                     if viewModel.errorMessage == nil {
@@ -79,8 +86,9 @@ private struct RouteModifyContentView: View {
                     }
                 }
             }
+            Button("취소", role: .cancel) {}
         } message: {
-            Text("이후 루트 데이터가 모두 재계산됩니다.\n수정하시겠습니까?")
+            Text("이 구간의 도착지만 변경할까요,\n이후 일정의 경로도 모두 재계산할까요?")
         }
     }
 
@@ -275,10 +283,10 @@ private struct RouteModifyContentView: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .tint(.white)
-                        Text("경로 재계산 중...")
+                        Text("경로 수정 중...")
                     }
                 } else {
-                    Text("경로 재계산하기")
+                    Text("경로 수정")
                 }
             }
             .font(.appBold(size: 17))

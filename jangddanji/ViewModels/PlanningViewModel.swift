@@ -108,8 +108,8 @@ final class PlanningViewModel {
 
         case .presetRoute:
             if splittingStrategy == .byCourse {
-                // 코스별 분할: modeSelection 스킵, 바로 일정(시작일) → 확인
-                return [.routeSource, .presetRoute, .schedule, .confirm]
+                // 코스별 분할: 1코스=1일, 중간 단계 없이 바로 확인
+                return [.routeSource, .presetRoute, .confirm]
             }
             var steps: [Step] = [.routeSource, .presetRoute, .modeSelection]
             switch planningMode {

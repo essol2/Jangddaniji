@@ -61,6 +61,44 @@ final class RouteModifyViewModel {
     }
 
     @available(iOS, deprecated: 26.0)
+    func recalculateCurrentOnly(context: ModelContext) async {
+        isCalculating = true
+        errorMessage = nil
+        defer { isCalculating = false }
+
+        do {
+            // 현재 구간의 거리 재계산 (출발지 → 새 도착지)
+            let todayStart = CLLocationCoordinate2D(latitude: dayRoute.startLatitude, longitude: dayRoute.startLongitude)
+            let todayEnd = CLLocationCoordinate2D(latitude: newEndLatitude, longitude: newEndLongitude)
+            let todayRoute = try await routeService.calculateWalkingRoute(from: todayStart, to: todayEnd)
+
+            // 현재 날의 도착지 + 거리 업데이트
+            dayRoute.endLocationName = newEndLocationName
+            dayRoute.endLatitude = newEndLatitude
+            dayRoute.endLongitude = newEndLongitude
+            dayRoute.distance = todayRoute.totalDistance
+
+            try? context.save()
+
+            // Live Activity 재시작
+            if dayRoute.status == .today, LiveActivityManager.shared.isActivityActive {
+                LiveActivityManager.shared.endActivity(isCompleted: false)
+                LiveActivityManager.shared.startActivity(
+                    journeyTitle: journey.title,
+                    dayNumber: dayRoute.dayNumber,
+                    startLocationName: dayRoute.startLocationName,
+                    endLocationName: newEndLocationName,
+                    totalDistanceMeters: todayRoute.totalDistance,
+                    todaySteps: 0,
+                    todayDistanceKm: 0
+                )
+            }
+        } catch {
+            errorMessage = "경로 계산 실패: \(error.localizedDescription)"
+        }
+    }
+
+    @available(iOS, deprecated: 26.0)
     func recalculate(remainingDaysCount: Int, context: ModelContext) async {
         isCalculating = true
         errorMessage = nil
