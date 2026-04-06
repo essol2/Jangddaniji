@@ -114,7 +114,8 @@ final class DashboardViewModel {
             from: from,
             fromName: dayRoute.startLocationName,
             to: to,
-            toName: dayRoute.endLocationName
+            toName: dayRoute.endLocationName,
+            waypoints: dayRoute.waypointCoordinates
         )
     }
 }

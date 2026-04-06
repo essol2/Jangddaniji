@@ -167,7 +167,8 @@ final class DayDetailViewModel {
             from: startCoordinate,
             fromName: dayRoute.startLocationName,
             to: endCoordinate,
-            toName: dayRoute.endLocationName
+            toName: dayRoute.endLocationName,
+            waypoints: waypoints
         )
     }
 
