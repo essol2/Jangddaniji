@@ -31,6 +31,7 @@ private struct DayDetailContentView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var pedometer = PedometerService()
     @State private var showCelebration = false
+    @State private var pendingJourneyCompleteID: UUID? = nil
     @State private var showPhotoViewer = false
     @State private var selectedPhotoIndex = 0
     @State private var isEditingPhotos = false
@@ -123,6 +124,14 @@ private struct DayDetailContentView: View {
                 .transition(.opacity)
             }
         } // ZStack
+        .onChange(of: showCelebration) { _, isShowing in
+            guard !isShowing, let journeyID = pendingJourneyCompleteID else { return }
+            pendingJourneyCompleteID = nil
+            router.popToRoot()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                router.navigateTo(.journeyComplete(journeyID: journeyID))
+            }
+        }
     }
 
     // MARK: - Header
@@ -153,13 +162,9 @@ private struct DayDetailContentView: View {
                             totalDistanceKm: pedometer.totalDistanceKm
                         )
                         if isLastSegment, let journeyID = dayRoute.journey?.id {
-                            router.popToRoot()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                router.navigateTo(.journeyComplete(journeyID: journeyID))
-                            }
-                        } else {
-                            withAnimation { showCelebration = true }
+                            pendingJourneyCompleteID = journeyID
                         }
+                        withAnimation { showCelebration = true }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark")

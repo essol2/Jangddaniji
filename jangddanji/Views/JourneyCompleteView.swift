@@ -125,7 +125,7 @@ private struct JourneyCompleteContentView: View {
                                 router.navigateTo(.archiveDetail(journeyID: journey.id))
                             }
                         } label: {
-                            Text("여정 기록 보기")
+                            Text("전체 기록 보러 가기")
                                 .font(.appBold(size: 16))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
