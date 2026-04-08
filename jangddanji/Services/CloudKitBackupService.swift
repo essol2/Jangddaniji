@@ -111,13 +111,27 @@ final class CloudKitBackupService {
     func checkBackupStatus() async throws -> BackupStatus {
         try await checkAccountStatus()
 
-        let metaQuery = CKQuery(recordType: metadataType, predicate: NSPredicate(value: true))
-        let (metaResults, _) = try await database.records(matching: metaQuery, resultsLimit: 1)
-        let lastBackupDate = metaResults.compactMap { try? $0.1.get() }.first?["lastBackupDate"] as? Date
+        var lastBackupDate: Date?
+        var count = 0
 
-        let journeyQuery = CKQuery(recordType: journeyType, predicate: NSPredicate(value: true))
-        let (journeyResults, _) = try await database.records(matching: journeyQuery, resultsLimit: 100)
-        let count = journeyResults.compactMap { try? $0.1.get() }.count
+        // 백업한 적 없으면 해당 레코드 타입이 CloudKit에 존재하지 않음 → 에러 대신 "백업 없음"으로 처리
+        let epoch = Date(timeIntervalSince1970: 0)
+
+        do {
+            let metaQuery = CKQuery(recordType: metadataType, predicate: NSPredicate(format: "lastBackupDate >= %@", epoch as CVarArg))
+            let (metaResults, _) = try await database.records(matching: metaQuery, resultsLimit: 1)
+            lastBackupDate = metaResults.compactMap { try? $0.1.get() }.first?["lastBackupDate"] as? Date
+        } catch let ckError as CKError where ckError.code == .unknownItem {
+            // 레코드 타입 없음 = 아직 백업 없음
+        }
+
+        do {
+            let journeyQuery = CKQuery(recordType: journeyType, predicate: NSPredicate(format: "createdAt >= %@", epoch as CVarArg))
+            let (journeyResults, _) = try await database.records(matching: journeyQuery, resultsLimit: 100)
+            count = journeyResults.compactMap { try? $0.1.get() }.count
+        } catch let ckError as CKError where ckError.code == .unknownItem {
+            // 레코드 타입 없음 = 아직 백업 없음
+        }
 
         return BackupStatus(lastBackupDate: lastBackupDate, journeyCount: count)
     }
@@ -291,9 +305,13 @@ final class CloudKitBackupService {
     func deleteAllCloudData() async throws {
         let types = [journalPhotoType, journalEntryType, dayRouteType, journeyType, metadataType]
         for type in types {
-            let records = try await fetchAllRecords(ofType: type)
-            for record in records {
-                try await database.deleteRecord(withID: record.recordID)
+            do {
+                let records = try await fetchAllRecords(ofType: type)
+                for record in records {
+                    try await database.deleteRecord(withID: record.recordID)
+                }
+            } catch let ckError as CKError where ckError.code == .unknownItem {
+                // 레코드 타입 없음 = 삭제할 것 없음, 계속 진행
             }
         }
     }
@@ -377,7 +395,16 @@ final class CloudKitBackupService {
 
     private func fetchAllRecords(ofType type: String) async throws -> [CKRecord] {
         var allRecords: [CKRecord] = []
-        let query = CKQuery(recordType: type, predicate: NSPredicate(value: true))
+        let epoch = Date(timeIntervalSince1970: 0)
+
+        // 타입별로 Queryable한 날짜 필드 사용
+        let dateField: String
+        switch type {
+        case metadataType:  dateField = "lastBackupDate"
+        case dayRouteType:  dateField = "date"          // DayRoute는 createdAt 없음, date 사용
+        default:            dateField = "createdAt"
+        }
+        let query = CKQuery(recordType: type, predicate: NSPredicate(format: "%K >= %@", dateField, epoch as CVarArg))
         var cursor: CKQueryOperation.Cursor?
 
         let (results, nextCursor) = try await database.records(matching: query, resultsLimit: 200)
@@ -405,9 +432,14 @@ final class CloudKitBackupService {
         var allRecords: [CKRecord] = []
         var cursor: CKQueryOperation.Cursor?
 
-        let (results, nextCursor) = try await database.records(matching: query, resultsLimit: 200)
-        allRecords.append(contentsOf: results.compactMap { try? $0.1.get() })
-        cursor = nextCursor
+        do {
+            let (results, nextCursor) = try await database.records(matching: query, resultsLimit: 200)
+            allRecords.append(contentsOf: results.compactMap { try? $0.1.get() })
+            cursor = nextCursor
+        } catch let ckError as CKError where ckError.code == .unknownItem {
+            // 레코드 타입 없음 = 해당 데이터 없음, 빈 배열 반환
+            return []
+        }
 
         while let currentCursor = cursor {
             let (moreResults, moreCursor) = try await database.records(continuingMatchFrom: currentCursor, resultsLimit: 200)
@@ -419,10 +451,14 @@ final class CloudKitBackupService {
     }
 
     private func saveBackupMetadata() async throws {
-        // 기존 메타데이터 삭제
-        let existing = try await fetchAllRecords(ofType: metadataType)
-        for record in existing {
-            try await database.deleteRecord(withID: record.recordID)
+        // 기존 메타데이터 삭제 (처음 백업 시엔 타입이 없을 수 있으므로 무시)
+        do {
+            let existing = try await fetchAllRecords(ofType: metadataType)
+            for record in existing {
+                try await database.deleteRecord(withID: record.recordID)
+            }
+        } catch let ckError as CKError where ckError.code == .unknownItem {
+            // 아직 BackupMetadata 타입 없음 = 삭제할 것 없음
         }
 
         let record = CKRecord(recordType: metadataType)

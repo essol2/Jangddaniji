@@ -34,6 +34,11 @@ final class BackupViewModel {
                 iCloudAvailable = false
             }
             errorMessage = error.errorDescription
+        } catch let ckError as NSError where ckError.domain == "CKErrorDomain" {
+            // CloudKit 스키마 미설정 (인덱스 없음 등) → 백업 없음으로 간주
+            lastBackupDate = nil
+            cloudJourneyCount = 0
+            iCloudAvailable = true
         } catch {
             errorMessage = "상태 확인 실패: \(error.localizedDescription)"
         }
