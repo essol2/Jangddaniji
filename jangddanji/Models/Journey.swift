@@ -28,7 +28,7 @@ final class Journey {
     }
 
     var createdAt: Date
-    var updatedAt: Date
+    var updatedAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \DayRoute.journey)
     var dayRoutes: [DayRoute] = []
