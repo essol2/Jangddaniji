@@ -14,6 +14,8 @@ final class BackupViewModel {
     var lastBackupDate: Date?
     var cloudJourneyCount: Int = 0
     var showRestoreConfirm = false
+    var showDeleteConfirm = false
+    var isDeleting = false
     var iCloudAvailable = true
 
     private let backupService = CloudKitBackupService()
@@ -169,5 +171,23 @@ final class BackupViewModel {
         }
 
         isRestoring = false
+    }
+
+    // MARK: - Delete
+
+    func deleteAllCloudData() async {
+        isDeleting = true
+        errorMessage = nil
+        successMessage = nil
+
+        do {
+            try await backupService.deleteAllCloudData()
+            successMessage = "iCloud 백업 데이터가 모두 삭제되었습니다."
+            await checkBackupStatus()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isDeleting = false
     }
 }

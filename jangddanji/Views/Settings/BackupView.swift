@@ -5,6 +5,7 @@ struct BackupView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = BackupViewModel()
     @State private var showRestoreConfirm = false
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         ScrollView {
@@ -18,6 +19,11 @@ struct BackupView: View {
 
                     // 복원 카드
                     restoreCard
+
+                    // 삭제 카드
+                    if viewModel.cloudJourneyCount > 0 {
+                        deleteCard
+                    }
                 }
             }
             .padding(20)
@@ -27,6 +33,14 @@ struct BackupView: View {
         .navigationBarTitleDisplayMode(.large)
         .task {
             await viewModel.checkBackupStatus()
+        }
+        .alert("iCloud 백업 삭제", isPresented: $showDeleteConfirm) {
+            Button("삭제", role: .destructive) {
+                Task { await viewModel.deleteAllCloudData() }
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("iCloud에 저장된 모든 백업 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.")
         }
         .alert("데이터 복원", isPresented: $showRestoreConfirm) {
             Button("복원", role: .destructive) {
@@ -197,6 +211,54 @@ struct BackupView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .disabled(viewModel.isBackingUp || viewModel.isRestoring || viewModel.cloudJourneyCount == 0)
+        }
+        .padding(16)
+        .background(AppColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+    }
+
+    // MARK: - Delete Card
+
+    private var deleteCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "trash.fill")
+                    .font(.title3)
+                    .foregroundStyle(.red)
+                Text("백업 삭제")
+                    .font(.appBold(size: 18))
+                    .foregroundStyle(AppColors.textPrimary)
+            }
+
+            Text("iCloud에 저장된 모든 백업 데이터를 삭제합니다. 기기의 데이터는 영향을 받지 않습니다.")
+                .font(.appRegular(size: 13))
+                .foregroundStyle(AppColors.textSecondary)
+
+            if viewModel.isDeleting {
+                HStack(spacing: 8) {
+                    ProgressView()
+                    Text("삭제 중...")
+                        .font(.appRegular(size: 13))
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+            }
+
+            Button {
+                showDeleteConfirm = true
+            } label: {
+                HStack {
+                    Image(systemName: "trash")
+                    Text("iCloud 백업 모두 삭제")
+                        .font(.appBold(size: 16))
+                }
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(.red.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .disabled(viewModel.isDeleting || viewModel.isBackingUp || viewModel.isRestoring)
         }
         .padding(16)
         .background(AppColors.cardBackground)

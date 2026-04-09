@@ -207,8 +207,19 @@ final class CloudKitBackupService {
 
         progressHandler(0, "백업 데이터 확인 중...")
 
-        // 1. Journey 가져오기
-        let journeyRecords = try await fetchAllRecords(ofType: journeyType)
+        // 1. Journey 가져오기 (같은 id 중 updatedAt이 가장 최신인 것만 유지)
+        let allJourneyRecords = try await fetchAllRecords(ofType: journeyType)
+        var journeyMap: [String: CKRecord] = [:]
+        for record in allJourneyRecords {
+            guard let id = record["id"] as? String else { continue }
+            let existing = journeyMap[id]
+            let existingDate = existing?["updatedAt"] as? Date ?? Date.distantPast
+            let newDate = record["updatedAt"] as? Date ?? Date.distantPast
+            if newDate > existingDate {
+                journeyMap[id] = record
+            }
+        }
+        let journeyRecords = Array(journeyMap.values)
         guard !journeyRecords.isEmpty else {
             throw CloudKitBackupError.restoreFailed("복원할 백업 데이터가 없습니다.")
         }
@@ -332,10 +343,18 @@ final class CloudKitBackupService {
     private func fetchCloudJourneyMap() async throws -> [String: CKRecord] {
         do {
             let records = try await fetchAllRecords(ofType: journeyType)
-            return Dictionary(uniqueKeysWithValues: records.compactMap { record -> (String, CKRecord)? in
-                guard let id = record["id"] as? String else { return nil }
-                return (id, record)
-            })
+            // 같은 id의 레코드가 여러 개 있을 경우 updatedAt이 가장 최신인 것만 유지
+            var map: [String: CKRecord] = [:]
+            for record in records {
+                guard let id = record["id"] as? String else { continue }
+                let existing = map[id]
+                let existingDate = existing?["updatedAt"] as? Date ?? Date.distantPast
+                let newDate = record["updatedAt"] as? Date ?? Date.distantPast
+                if newDate > existingDate {
+                    map[id] = record
+                }
+            }
+            return map
         } catch let ckError as CKError where ckError.code == .unknownItem {
             return [:]
         }
