@@ -471,9 +471,14 @@ final class CloudKitBackupService {
         let query = CKQuery(recordType: type, predicate: NSPredicate(format: "%K >= %@", dateField, epoch as CVarArg))
         var cursor: CKQueryOperation.Cursor?
 
-        let (results, nextCursor) = try await database.records(matching: query, resultsLimit: 200)
-        allRecords.append(contentsOf: results.compactMap { try? $0.1.get() })
-        cursor = nextCursor
+        do {
+            let (results, nextCursor) = try await database.records(matching: query, resultsLimit: 200)
+            allRecords.append(contentsOf: results.compactMap { try? $0.1.get() })
+            cursor = nextCursor
+        } catch let ckError as CKError {
+            if isRecordTypeNotFound(ckError) { return [] }
+            throw ckError
+        }
 
         while let currentCursor = cursor {
             let (moreResults, moreCursor) = try await database.records(continuingMatchFrom: currentCursor, resultsLimit: 200)
@@ -500,9 +505,9 @@ final class CloudKitBackupService {
             let (results, nextCursor) = try await database.records(matching: query, resultsLimit: 200)
             allRecords.append(contentsOf: results.compactMap { try? $0.1.get() })
             cursor = nextCursor
-        } catch let ckError as CKError where ckError.code == .unknownItem {
-            // 레코드 타입 없음 = 해당 데이터 없음, 빈 배열 반환
-            return []
+        } catch let ckError as CKError {
+            if isRecordTypeNotFound(ckError) { return [] }
+            throw ckError
         }
 
         while let currentCursor = cursor {
@@ -512,6 +517,13 @@ final class CloudKitBackupService {
         }
 
         return allRecords
+    }
+
+    /// "Did not find record type" 에러 여부 판별 (코드가 버전마다 다를 수 있어 메시지도 함께 확인)
+    private func isRecordTypeNotFound(_ error: CKError) -> Bool {
+        if error.code == .unknownItem { return true }
+        let desc = error.localizedDescription
+        return desc.contains("Did not find record type") || desc.contains("record type")
     }
 
     private func saveBackupMetadata() async throws {
