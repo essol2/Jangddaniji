@@ -79,6 +79,7 @@ final class DashboardViewModel {
         // Live Activity 종료
         LiveActivityManager.shared.endActivity(isCompleted: true)
 
+        journey.updatedAt = Date()
         if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
             journey.totalSteps = totalSteps
             journey.totalDistanceWalked = totalDistanceKm

@@ -122,6 +122,7 @@ final class DayDetailViewModel {
         LiveActivityManager.shared.endActivity(isCompleted: true)
 
         if let journey = dayRoute.journey {
+            journey.updatedAt = Date()
             if journey.dayRoutes.allSatisfy({ $0.status == .completed }) {
                 journey.totalSteps = totalSteps
                 journey.totalDistanceWalked = totalDistanceKm

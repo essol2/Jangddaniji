@@ -65,14 +65,18 @@ final class BackupViewModel {
                 return
             }
 
-            try await backupService.backup(journeys: journeys) { [weak self] progress, message in
+            let result = try await backupService.backup(journeys: journeys) { [weak self] progress, message in
                 Task { @MainActor in
                     self?.progress = progress
                     self?.progressMessage = message
                 }
             }
 
-            successMessage = "\(journeys.count)개의 여정이 iCloud에 백업되었습니다."
+            var parts: [String] = []
+            if result.uploaded > 0 { parts.append("신규 \(result.uploaded)개") }
+            if result.updated > 0  { parts.append("업데이트 \(result.updated)개") }
+            if result.skipped > 0  { parts.append("변경없음 \(result.skipped)개") }
+            successMessage = parts.isEmpty ? "백업할 변경사항이 없습니다." : parts.joined(separator: ", ") + " 백업 완료"
             await checkBackupStatus()
         } catch {
             errorMessage = error.localizedDescription
@@ -124,6 +128,7 @@ final class BackupViewModel {
                 journey.totalSteps = journeyData.totalSteps
                 journey.totalDistanceWalked = journeyData.totalDistanceWalked
                 journey.statusRawValue = journeyData.statusRawValue
+                journey.updatedAt = journeyData.updatedAt
                 context.insert(journey)
 
                 for dayRouteData in journeyData.dayRoutes {
@@ -139,6 +144,7 @@ final class BackupViewModel {
                         distance: dayRouteData.distance
                     )
                     dayRoute.statusRawValue = dayRouteData.statusRawValue
+                    dayRoute.waypointsData = dayRouteData.waypointsData
                     dayRoute.journey = journey
                     context.insert(dayRoute)
 

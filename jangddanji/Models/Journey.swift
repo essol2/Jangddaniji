@@ -28,6 +28,7 @@ final class Journey {
     }
 
     var createdAt: Date
+    var updatedAt: Date
 
     @Relationship(deleteRule: .cascade, inverse: \DayRoute.journey)
     var dayRoutes: [DayRoute] = []
@@ -68,5 +69,6 @@ final class Journey {
         self.totalDistanceWalked = 0
         self.statusRawValue = JourneyStatus.planning.rawValue
         self.createdAt = Date()
+        self.updatedAt = Date()
     }
 }

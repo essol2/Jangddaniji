@@ -30,6 +30,12 @@ struct BackupStatus {
 
 // MARK: - Restored Data
 
+struct MergeResult {
+    var uploaded: Int = 0
+    var updated: Int = 0
+    var skipped: Int = 0
+}
+
 struct RestoredJourneyData {
     let id: UUID
     let title: String
@@ -46,6 +52,7 @@ struct RestoredJourneyData {
     let totalDistanceWalked: Double
     let statusRawValue: String
     let createdAt: Date
+    let updatedAt: Date
     var dayRoutes: [RestoredDayRouteData]
 }
 
@@ -60,6 +67,7 @@ struct RestoredDayRouteData {
     let endLatitude: Double
     let endLongitude: Double
     let distance: Double
+    let waypointsData: Data?
     let statusRawValue: String
     var journalEntry: RestoredJournalEntryData?
 }
@@ -136,57 +144,58 @@ final class CloudKitBackupService {
         return BackupStatus(lastBackupDate: lastBackupDate, journeyCount: count)
     }
 
-    // MARK: - Backup
+    // MARK: - Backup (Merge)
 
     func backup(
         journeys: [Journey],
         progressHandler: @escaping (Double, String) -> Void
-    ) async throws {
+    ) async throws -> MergeResult {
         try await checkAccountStatus()
 
-        let totalItems = countTotalItems(journeys)
+        var result = MergeResult()
+        let total = journeys.count
         var completed = 0
 
-        func updateProgress(_ message: String) {
-            completed += 1
-            progressHandler(Double(completed) / Double(max(totalItems, 1)), message)
-        }
+        // 1. 클라우드 현황 파악
+        progressHandler(0, "클라우드 현황 확인 중...")
+        let cloudMap = try await fetchCloudJourneyMap()
 
-        // 1. 기존 클라우드 데이터 삭제
-        progressHandler(0, "기존 백업 데이터 정리 중...")
-        try await deleteAllCloudData()
-
-        // 2. Journey 업로드
+        // 2. 로컬 여정 순회 → 병합
         for journey in journeys {
-            let journeyRecord = makeJourneyRecord(journey)
-            try await database.save(journeyRecord)
-            updateProgress("여정 '\(journey.title)' 업로드 중...")
+            let idStr = journey.id.uuidString
+            completed += 1
+            let progress = Double(completed) / Double(max(total, 1))
 
-            // 3. DayRoute 업로드
-            for dayRoute in journey.sortedDayRoutes {
-                let dayRouteRecord = makeDayRouteRecord(dayRoute, journeyRecordID: journeyRecord.recordID)
-                try await database.save(dayRouteRecord)
-                updateProgress("\(dayRoute.dayNumber)일차 경로 업로드 중...")
-
-                // 4. JournalEntry 업로드
-                if let entry = dayRoute.journalEntry {
-                    let entryRecord = makeJournalEntryRecord(entry, dayRouteRecordID: dayRouteRecord.recordID)
-                    try await database.save(entryRecord)
-                    updateProgress("일지 업로드 중...")
-
-                    // 5. Photos 업로드
-                    for photo in entry.sortedPhotos {
-                        let photoRecord = makePhotoRecord(photo, entryRecordID: entryRecord.recordID)
-                        try await database.save(photoRecord)
-                        updateProgress("사진 업로드 중...")
-                    }
+            if let cloudRecord = cloudMap[idStr] {
+                // 클라우드에 이미 존재 → updatedAt 비교
+                let cloudUpdatedAt = cloudRecord["updatedAt"] as? Date ?? Date.distantPast
+                if journey.updatedAt > cloudUpdatedAt {
+                    // 로컬이 더 최신 → 갱신
+                    progressHandler(progress, "'\(journey.title)' 업데이트 중...")
+                    updateJourneyRecord(cloudRecord, with: journey)
+                    try await database.save(cloudRecord)
+                    try await deleteChildRecords(journeyRecordID: cloudRecord.recordID)
+                    try await uploadChildRecords(journey: journey, journeyRecordID: cloudRecord.recordID)
+                    result.updated += 1
+                } else {
+                    // 클라우드가 최신이거나 동일 → 스킵
+                    progressHandler(progress, "'\(journey.title)' 변경 없음, 스킵")
+                    result.skipped += 1
                 }
+            } else {
+                // 클라우드에 없음 → 신규 업로드
+                progressHandler(progress, "'\(journey.title)' 업로드 중...")
+                let newRecord = makeJourneyRecord(journey)
+                try await database.save(newRecord)
+                try await uploadChildRecords(journey: journey, journeyRecordID: newRecord.recordID)
+                result.uploaded += 1
             }
         }
 
-        // 6. 메타데이터 저장
+        // 3. 메타데이터 갱신
         try await saveBackupMetadata()
         progressHandler(1.0, "백업 완료")
+        return result
     }
 
     // MARK: - Restore
@@ -271,6 +280,7 @@ final class CloudKitBackupService {
                     endLatitude: dayRouteRecord["endLatitude"] as? Double ?? 0,
                     endLongitude: dayRouteRecord["endLongitude"] as? Double ?? 0,
                     distance: dayRouteRecord["distance"] as? Double ?? 0,
+                    waypointsData: (dayRouteRecord["waypointsData"] as? NSData).map { Data($0) },
                     statusRawValue: dayRouteRecord["statusRawValue"] as? String ?? "upcoming",
                     journalEntry: restoredEntry
                 ))
@@ -292,6 +302,7 @@ final class CloudKitBackupService {
                 totalDistanceWalked: journeyRecord["totalDistanceWalked"] as? Double ?? 0,
                 statusRawValue: journeyRecord["statusRawValue"] as? String ?? "planning",
                 createdAt: journeyRecord["createdAt"] as? Date ?? Date(),
+                updatedAt: journeyRecord["updatedAt"] as? Date ?? journeyRecord["createdAt"] as? Date ?? Date(),
                 dayRoutes: restoredDayRoutes.sorted { $0.dayNumber < $1.dayNumber }
             ))
         }
@@ -316,6 +327,49 @@ final class CloudKitBackupService {
         }
     }
 
+    // MARK: - Merge Helpers
+
+    private func fetchCloudJourneyMap() async throws -> [String: CKRecord] {
+        do {
+            let records = try await fetchAllRecords(ofType: journeyType)
+            return Dictionary(uniqueKeysWithValues: records.compactMap { record -> (String, CKRecord)? in
+                guard let id = record["id"] as? String else { return nil }
+                return (id, record)
+            })
+        } catch let ckError as CKError where ckError.code == .unknownItem {
+            return [:]
+        }
+    }
+
+    private func deleteChildRecords(journeyRecordID: CKRecord.ID) async throws {
+        // DayRoute만 삭제하면 .deleteSelf reference로 JournalEntry, JournalPhoto 연쇄 삭제
+        let dayRoutes = try await fetchRelatedRecords(
+            ofType: dayRouteType,
+            referenceField: "journeyRef",
+            parentRecordID: journeyRecordID
+        )
+        for record in dayRoutes {
+            try await database.deleteRecord(withID: record.recordID)
+        }
+    }
+
+    private func uploadChildRecords(journey: Journey, journeyRecordID: CKRecord.ID) async throws {
+        for dayRoute in journey.sortedDayRoutes {
+            let dayRouteRecord = makeDayRouteRecord(dayRoute, journeyRecordID: journeyRecordID)
+            try await database.save(dayRouteRecord)
+
+            if let entry = dayRoute.journalEntry {
+                let entryRecord = makeJournalEntryRecord(entry, dayRouteRecordID: dayRouteRecord.recordID)
+                try await database.save(entryRecord)
+
+                for photo in entry.sortedPhotos {
+                    let photoRecord = makePhotoRecord(photo, entryRecordID: entryRecord.recordID)
+                    try await database.save(photoRecord)
+                }
+            }
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func countTotalItems(_ journeys: [Journey]) -> Int {
@@ -334,6 +388,15 @@ final class CloudKitBackupService {
 
     private func makeJourneyRecord(_ journey: Journey) -> CKRecord {
         let record = CKRecord(recordType: journeyType)
+        fillJourneyRecord(record, with: journey)
+        return record
+    }
+
+    private func updateJourneyRecord(_ record: CKRecord, with journey: Journey) {
+        fillJourneyRecord(record, with: journey)
+    }
+
+    private func fillJourneyRecord(_ record: CKRecord, with journey: Journey) {
         record["id"] = journey.id.uuidString
         record["title"] = journey.title
         record["startLocationName"] = journey.startLocationName
@@ -349,7 +412,7 @@ final class CloudKitBackupService {
         record["totalDistanceWalked"] = journey.totalDistanceWalked
         record["statusRawValue"] = journey.statusRawValue
         record["createdAt"] = journey.createdAt
-        return record
+        record["updatedAt"] = journey.updatedAt
     }
 
     private func makeDayRouteRecord(_ dayRoute: DayRoute, journeyRecordID: CKRecord.ID) -> CKRecord {
@@ -365,6 +428,7 @@ final class CloudKitBackupService {
         record["endLongitude"] = dayRoute.endLongitude
         record["distance"] = dayRoute.distance
         record["statusRawValue"] = dayRoute.statusRawValue
+        record["waypointsData"] = dayRoute.waypointsData.map { NSData(data: $0) }
         record["journeyRef"] = CKRecord.Reference(recordID: journeyRecordID, action: .deleteSelf)
         return record
     }
