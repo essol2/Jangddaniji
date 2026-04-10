@@ -30,17 +30,6 @@ struct HikingTrackingView: View {
         .navigationTitle(viewModel.mountainName)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showCompleteConfirm = true
-                } label: {
-                    Text("완료")
-                        .font(.appBold(size: 16))
-                        .foregroundStyle(AppColors.primaryBlueDark)
-                }
-            }
-        }
         .alert("미완료 등산 세션 발견", isPresented: $viewModel.showRecoveryAlert) {
             Button("이어서 기록") { viewModel.resumeSavedSession() }
             Button("새로 시작", role: .destructive) { viewModel.discardSavedSession() }
@@ -97,10 +86,7 @@ struct HikingTrackingView: View {
                     )
             }
         }
-        .mapControls {
-            MapUserLocationButton()
-            MapCompass()
-        }
+        .mapControls { }
         .ignoresSafeArea(edges: .top)
     }
 
@@ -159,6 +145,22 @@ struct HikingTrackingView: View {
                     value: String(format: "%.2f", viewModel.totalDistanceMeters / 1000),
                     unit: "km (GPS)"
                 )
+            }
+
+            // 완료 버튼
+            Button {
+                showCompleteConfirm = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "flag.checkered")
+                    Text("등산 완료")
+                        .font(.appBold(size: 17))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(AppColors.primaryBlueDark)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
         }
         .padding(.horizontal, 20)
