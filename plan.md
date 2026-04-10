@@ -163,6 +163,90 @@ Journey (journeyType = "hiking")
 
 ---
 
+## iCloud 기반 PC 간 동기화 설정
+
+GitHub(origin) 외에 iCloud bare repo를 추가 remote로 사용하여 두 PC 간 코드를 동기화한다.
+원격 저장소(GitHub) 없이 iCloud만으로 변경사항(델타)을 주고받는 구조다.
+
+### Remote 구조
+
+| remote | 용도 | 주소 |
+|--------|------|------|
+| `origin` | GitHub 백업/배포 (기존 유지) | https://github.com/essol2/Jangddaniji.git |
+| `icloud` | PC 간 일상 동기화 (신규) | ~/Library/Mobile Documents/com~apple~CloudDocs/GitRepos/jangddanji.git |
+
+---
+
+### PC A 초기 설정 (1회)
+
+```bash
+# iCloud에 bare repo 생성
+mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/GitRepos
+git init --bare ~/Library/Mobile\ Documents/com~apple~CloudDocs/GitRepos/jangddanji.git
+
+# icloud remote 추가
+cd ~/Documents/project/jangddanji
+git remote add icloud ~/Library/Mobile\ Documents/com~apple~CloudDocs/GitRepos/jangddanji.git
+
+# 전체 브랜치 iCloud에 push
+git push icloud main
+git push icloud dev_mountain
+git push icloud dev_home
+```
+
+---
+
+### PC B 초기 설정 (1회)
+
+> iCloud 동기화가 완료된 후 실행할 것 (메뉴바 iCloud 아이콘 업로드 표시 없어야 함)
+
+```bash
+# iCloud bare repo에서 clone
+git clone ~/Library/Mobile\ Documents/com~apple~CloudDocs/GitRepos/jangddanji.git ~/Documents/project/jangddanji
+
+cd ~/Documents/project/jangddanji
+
+# GitHub remote 추가 (origin)
+git remote add origin https://github.com/essol2/Jangddaniji.git
+
+# 브랜치 확인
+git branch -a
+
+# 작업 브랜치로 전환
+git checkout dev_mountain
+```
+
+---
+
+### 일상 사용법
+
+**작업 시작 전 (어느 PC든)**
+```bash
+git pull icloud dev_mountain
+```
+
+**작업 완료 후 자리 뜨기 전**
+```bash
+git add .
+git commit -m "작업 내용"
+git push icloud dev_mountain
+```
+
+**GitHub에 올릴 때 (배포/백업 시)**
+```bash
+git push origin dev_mountain
+```
+
+---
+
+### 주의사항
+
+- `git push icloud` 후 **메뉴바 iCloud 아이콘의 업로드 표시가 사라진 것을 확인**하고 PC를 전환할 것
+- `icloud`와 `origin`은 자동으로 동기화되지 않으므로 GitHub에 올리려면 별도로 `git push origin` 실행
+- `.gitignore`에 `DerivedData/`, `xcuserdata/` 포함 여부 확인 (현재 포함됨 ✅)
+
+---
+
 ## 변경 파일 목록 요약
 
 | 파일 | 신규/수정 |
