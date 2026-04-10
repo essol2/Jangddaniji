@@ -10,6 +10,9 @@ enum AppDestination: Hashable {
     case archiveDetail(journeyID: UUID)
     case journeyComplete(journeyID: UUID)
     case backup
+    case hikingSetup
+    case hikingTracking(mountainName: String, latitude: Double, longitude: Double)
+    case hikingResult(journeyID: UUID)
 }
 
 @Observable

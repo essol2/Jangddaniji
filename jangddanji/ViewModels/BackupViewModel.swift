@@ -130,6 +130,7 @@ final class BackupViewModel {
                 journey.totalSteps = journeyData.totalSteps
                 journey.totalDistanceWalked = journeyData.totalDistanceWalked
                 journey.statusRawValue = journeyData.statusRawValue
+                journey.journeyType = journeyData.journeyType
                 journey.updatedAt = journeyData.updatedAt
                 context.insert(journey)
 

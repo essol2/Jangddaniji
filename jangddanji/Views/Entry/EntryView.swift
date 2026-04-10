@@ -4,8 +4,10 @@ import SwiftData
 struct EntryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
-    @Query(filter: #Predicate<Journey> { $0.statusRawValue == "active" })
+    @Query(filter: #Predicate<Journey> { $0.statusRawValue == "active" && $0.journeyType == "longDistance" })
     private var activeJourneys: [Journey]
+    @Query(filter: #Predicate<Journey> { $0.statusRawValue == "active" && $0.journeyType == "hiking" })
+    private var activeHikings: [Journey]
     @Query(filter: #Predicate<Journey> { $0.statusRawValue == "completed" })
     private var completedJourneys: [Journey]
 
@@ -56,13 +58,7 @@ struct EntryView: View {
                 VStack(spacing: 12) {
                     if !activeJourneys.isEmpty {
                         Button {
-                            // [AD-DISABLED] if Double.random(in: 0..<1) < 0.2 {
-                            //     interstitialAd.tryShowAd {
-                            //         router.navigateTo(.dashboard)
-                            //     }
-                            // } else {
                                 router.navigateTo(.dashboard)
-                            // }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "figure.walk.circle.fill")
@@ -78,9 +74,7 @@ struct EntryView: View {
                         }
                     } else {
                         Button {
-                            // [AD-DISABLED] interstitialAd.tryShowAd {
                                 router.navigateTo(.planning)
-                            // }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "mappin.circle.fill")
@@ -92,6 +86,48 @@ struct EntryView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 54)
                             .background(AppColors.primaryBlueDark)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                    }
+
+                    // 등산 버튼
+                    if !activeHikings.isEmpty {
+                        Button {
+                            if let hiking = activeHikings.first,
+                               let route = hiking.sortedDayRoutes.first {
+                                router.navigateTo(.hikingTracking(
+                                    mountainName: hiking.title,
+                                    latitude: route.startLatitude,
+                                    longitude: route.startLongitude
+                                ))
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "figure.hiking")
+                                    .font(.appRegular(size: 18))
+                                Text("이어서 등산하기")
+                                    .font(.appBold(size: 17))
+                            }
+                            .foregroundStyle(AppColors.primaryBlueDark)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(.white.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                    } else {
+                        Button {
+                            router.navigateTo(.hikingSetup)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "figure.hiking")
+                                    .font(.appRegular(size: 18))
+                                Text("등산 기록하기")
+                                    .font(.appBold(size: 17))
+                            }
+                            .foregroundStyle(AppColors.primaryBlueDark)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(.white.opacity(0.9))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }

@@ -51,6 +51,7 @@ struct RestoredJourneyData {
     let totalSteps: Int
     let totalDistanceWalked: Double
     let statusRawValue: String
+    let journeyType: String
     let createdAt: Date
     let updatedAt: Date
     var dayRoutes: [RestoredDayRouteData]
@@ -312,6 +313,7 @@ final class CloudKitBackupService {
                 totalSteps: journeyRecord["totalSteps"] as? Int ?? 0,
                 totalDistanceWalked: journeyRecord["totalDistanceWalked"] as? Double ?? 0,
                 statusRawValue: journeyRecord["statusRawValue"] as? String ?? "planning",
+                journeyType: journeyRecord["journeyType"] as? String ?? "longDistance",
                 createdAt: journeyRecord["createdAt"] as? Date ?? Date(),
                 updatedAt: journeyRecord["updatedAt"] as? Date ?? journeyRecord["createdAt"] as? Date ?? Date(),
                 dayRoutes: restoredDayRoutes.sorted { $0.dayNumber < $1.dayNumber }
@@ -430,6 +432,7 @@ final class CloudKitBackupService {
         record["totalSteps"] = journey.totalSteps
         record["totalDistanceWalked"] = journey.totalDistanceWalked
         record["statusRawValue"] = journey.statusRawValue
+        record["journeyType"] = journey.journeyType
         record["createdAt"] = journey.createdAt
         record["updatedAt"] = journey.updatedAt
     }

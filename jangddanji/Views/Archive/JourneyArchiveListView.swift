@@ -104,6 +104,23 @@ private struct JourneyArchiveCard: View {
                     .foregroundStyle(AppColors.textPrimary)
                     .lineLimit(1)
                 Spacer()
+                if journey.journeyType == "hiking" {
+                    Label("등산", systemImage: "figure.hiking")
+                        .font(.appRegular(size: 11))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(AppColors.primaryBlue.opacity(0.15))
+                        .clipShape(Capsule())
+                } else {
+                    Label("도보", systemImage: "figure.walk")
+                        .font(.appRegular(size: 11))
+                        .foregroundStyle(AppColors.primaryBlueDark)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(AppColors.primaryBlue.opacity(0.15))
+                        .clipShape(Capsule())
+                }
                 Image(systemName: "checkmark.seal.fill")
                     .font(.appRegular(size: 18))
                     .foregroundStyle(AppColors.completedGreen)

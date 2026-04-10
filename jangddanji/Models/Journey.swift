@@ -21,6 +21,8 @@ final class Journey {
     var totalSteps: Int
     var totalDistanceWalked: Double  // km
 
+    var journeyType: String = "longDistance"  // "longDistance" | "hiking"
+
     var statusRawValue: String
     var status: JourneyStatus {
         get { JourneyStatus(rawValue: statusRawValue) ?? .planning }

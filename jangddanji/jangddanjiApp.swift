@@ -102,6 +102,12 @@ struct jangddanjiApp: App {
             JourneyCompleteView(journeyID: id)
         case .backup:
             BackupView()
+        case .hikingSetup:
+            HikingSetupView()
+        case .hikingTracking(let mountainName, let latitude, let longitude):
+            HikingTrackingView(mountainName: mountainName, latitude: latitude, longitude: longitude)
+        case .hikingResult(let id):
+            HikingResultView(journeyID: id)
         }
     }
 }

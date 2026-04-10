@@ -11,7 +11,12 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<string>location</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>등산 중 실시간 경로를 기록하기 위해 위치 접근 권한이 필요합니다.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>등산 중 화면이 꺼져도 경로를 계속 기록하기 위해 백그라운드 위치 접근 권한이 필요합니다.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>HakgyoansimBadasseugi-B.ttf</string>
