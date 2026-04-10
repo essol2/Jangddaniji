@@ -11,7 +11,7 @@
 ## 개요
 
 기존 장거리 도보 여정 구조를 최대한 재활용하여 등산 기록 기능을 추가한다.
-산 선택 → 실시간 GPS 트래킹 (백그라운드 포함) → HealthKit 연동 → 기록 저장의 흐름으로 구성한다.
+산 선택 → 실시간 GPS 트래킹 (백그라운드 포함) → HealthKit 실시간 연동 → 기록 저장의 흐름으로 구성한다.
 
 ---
 
@@ -20,23 +20,38 @@
 ```
 EntryView
   └─ "등산 기록하기" 버튼 (진행 중인 등산 없을 때 항상 표시)
+  └─ "이어서 등산하기" 버튼 (진행 중인 등산 있을 때 표시)
         ↓
   HikingSetupView
     - Naver API로 산 이름 검색 및 선택
     - "등산 시작" 버튼
         ↓
   HikingTrackingView
-    - 지도 + 실시간 경로 선 표시
-    - 걸음수 · 거리 · 경과 시간 표시
+    - MapKit MapPolyline으로 실시간 경로 선 표시
+    - HealthKit 실시간 폴링: 걸음수 · 거리 · 칼로리
+    - 경과 시간 표시
     - 백그라운드에서도 GPS 계속 기록
+    - 10초마다 트래킹 데이터 로컬 임시 저장 (강제 종료 복구용)
     - "등산 완료" 버튼
         ↓
   HikingResultView
-    - 총 거리 · 걸음수 · 소요 시간 요약
-    - 걸은 경로 지도
-    - 사진 · 메모 기록
+    - 걸은 경로 지도 (MapKit 스냅샷)
+    - 총 거리 · 걸음수 · 칼로리 · 소요 시간 요약
+    - 사진 추가 / 메모 입력
     - 저장 → EntryView로 복귀
 ```
+
+---
+
+## 기술 결정사항
+
+| 항목 | 결정 | 이유 |
+|---|---|---|
+| 지도 | MapKit | 완전 무료, 추가 SDK 불필요, iOS 17+ `MapPolyline` gradient 지원 |
+| 위치 검색 | Naver Local Search API (기존) | 이미 연동됨 |
+| HealthKit 수집 | 실시간 폴링 (30초 간격) | 트래킹 화면에 실시간 통계 표시 |
+| 강제 종료 복구 | 10초마다 UserDefaults에 임시 저장 | 리소스 부담 거의 없음 |
+| 일시정지 기능 | 미지원 | 미이동 시 GPS·걸음수 자연히 증가 안 함 |
 
 ---
 
@@ -83,12 +98,15 @@ Journey (journeyType = "hiking")
 - `CLLocationManager` 래핑
 - `allowsBackgroundLocationUpdates = true`
 - 좌표 배열 누적 → 폴리라인 데이터 생성
-- 거리 계산 (연속 좌표 간 CLLocation.distance 합산)
-- 시작 / 일시정지 / 재개 / 종료 제어
+- 거리 계산 (연속 좌표 간 `CLLocation.distance` 합산)
+- 10초마다 누적 좌표를 `UserDefaults`에 임시 저장
+- 앱 시작 시 미완료 세션 감지 → 복구 제안
+- 시작 / 종료 제어
 
 **2-2. `HealthKitService.swift` (신규)**
 - 걸음수 / 거리 / 칼로리 쿼리
-- 특정 시간 범위(등산 시작~종료) 기준으로 집계
+- `HKObserverQuery` 또는 30초 폴링으로 실시간 갱신
+- 특정 시간 범위(등산 시작~현재/종료) 기준으로 집계
 
 ---
 
@@ -100,31 +118,31 @@ Journey (journeyType = "hiking")
 
 **3-2. `HikingTrackingViewModel.swift` (신규)**
 - `HikingTrackingService` 보유 및 제어
+- `HealthKitService` 보유 및 실시간 폴링 관리
 - 실시간 경과 시간 타이머
-- 폴리라인 좌표 배열 → View에 노출
-- 현재 거리 (서비스에서 계산된 값 표시)
-- 등산 완료 시 임시 `Journey` + `DayRoute` 객체 생성하여 다음 화면으로 전달
+- 폴리라인 좌표 배열, 걸음수, 거리, 칼로리 → View에 노출
+- 등산 완료 시 `Journey` + `DayRoute` SwiftData insert
 
 ---
 
 ### Phase 4 — View
 
 **4-1. `HikingSetupView.swift` (신규)**
-- 산 이름 검색창 (기존 `LocationSearchBar` 컴포넌트 재활용 검토)
+- 산 이름 검색창 (기존 `LocationSearchBar` 컴포넌트 재활용)
 - 검색 결과 리스트
 - 선택된 산 표시
 - "등산 시작" 버튼
 
 **4-2. `HikingTrackingView.swift` (신규)**
-- MapKit Map + 폴리라인 오버레이
-- 현재 위치 마커
-- 걸음수 / 거리 / 경과 시간 카드
+- MapKit `Map` + `MapPolyline` (gradient stroke)
+- 현재 위치 마커 자동 추적
+- 실시간 통계 카드: 걸음수 · 거리 · 칼로리 · 경과 시간
+- 백그라운드 전환 시 안내 배너
 - "등산 완료" 버튼
-- 백그라운드 전환 시 상태 유지 안내 배너
 
 **4-3. `HikingResultView.swift` (신규)**
-- 걸은 경로 지도 (인터랙션 없는 스냅샷)
-- 통계 요약 (거리 · 걸음수 · 소요 시간)
+- 걸은 경로 지도 (MapKit 스냅샷, 인터랙션 없음)
+- 통계 요약 (거리 · 걸음수 · 칼로리 · 소요 시간)
 - 사진 추가 / 메모 입력
 - "저장" 버튼 → SwiftData insert 후 EntryView로
 
@@ -142,15 +160,6 @@ Journey (journeyType = "hiking")
 
 **5-3. `JourneyArchiveListView` / `JourneyArchiveDetailView`**
 - `journeyType`에 따라 등산 / 장거리 도보 배지 표시
-
----
-
-## 미결 사항 (검토 필요)
-
-1. **등산 중 앱 강제 종료 시 복구** — 트래킹 데이터를 중간중간 로컬에 저장해야 하는지
-2. **지도 뷰 선택** — MapKit 기본 Map 뷰 사용 vs NMapsMap (Naver Maps SDK) 도입
-3. **HealthKit 수집 타이밍** — 등산 종료 시점에 전체 집계 vs 실시간 폴링
-4. **일시정지 기능** — 트래킹 중 일시정지/재개 지원 여부
 
 ---
 
