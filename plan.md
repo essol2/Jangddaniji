@@ -162,3 +162,72 @@ Button {
   - 메시지: "'{journey.title}'의 모든 기록이 영구적으로 삭제됩니다."
   - "삭제" (destructive) → `context.delete(journey)` + `context.save()` + `router.pop()`
   - "취소" (cancel)
+
+---
+
+## Phase 10 — 구간 완료 축하 화면 캡처 및 이미지 저장
+
+현재 `CelebrationOverlayView`는 3초 후 자동으로 사라지는데, 사용자가 수동 스크린샷을 찍는 경우가 많다. 자동 dismiss를 제거하고 캡처 이미지 저장 기능을 추가한다.
+
+### 현재 상태
+
+- `CelebrationOverlayView` — 구간 완료 시 오버레이 (걸음수/이동거리 표시, 3초 후 auto dismiss)
+- `DayDetailView`, `DashboardView` 두 곳에서 사용
+- `JourneyCompleteView` — 전체 여정 완료 시 별도 전체 화면 (이건 이번 범위 아님)
+
+### UX 플로우
+
+```
+구간 완료 버튼 탭
+    ↓
+CelebrationOverlayView 등장 (컨페티 + 축하 카드)
+    ↓ 3초 auto dismiss 제거, 버튼으로 제어
+카드 하단에 두 개 버튼:
+  [이미지 저장] — 축하 카드 영역을 렌더링하여 사진 앨범에 저장
+  [닫기]       — 기존 dismiss 동작
+    ↓ 이미지 저장 탭
+카드 영역을 `ImageRenderer`로 렌더링 → `UIImageWriteToSavedPhotosAlbum`으로 저장
+저장 완료 시 "저장되었습니다" 토스트 또는 버튼 텍스트 변경으로 피드백
+```
+
+### 변경 사항
+
+**10-1. `CelebrationOverlayView.swift` 수정**
+- 3초 auto dismiss (`DispatchQueue.main.asyncAfter`) 제거
+- 배경 탭 dismiss 제거 (실수로 닫히는 것 방지)
+- 카드 하단에 버튼 2개 추가:
+  - "이미지 저장" 버튼: `AppColors.primaryBlueDark` 배경, 흰 텍스트
+  - "닫기" 버튼: 텍스트만, `AppColors.textSecondary`
+- 축하 카드 콘텐츠(🎉 + 축하합니다 + 걸음수/거리)를 별도 `@ViewBuilder` 변수로 분리
+- `ImageRenderer`로 카드 영역만 캡처 → `UIImageWriteToSavedPhotosAlbum`으로 저장
+
+**캡처 피드백 연출 (3단계):**
+
+1단계 — 플래시 효과:
+- "이미지 저장" 버튼 탭 시 `ImageRenderer`로 카드 캡처
+- 전체 화면에 `Color.white` 오버레이를 `opacity 0 → 1 → 0` 으로 0.3초간 애니메이션
+- 카메라 셔터 느낌의 순간 번쩍임
+
+2단계 — 캡처 프리뷰:
+- 플래시 후 축하 카드가 축소되면서 흰색 배경 위에 렌더링된 미리보기 이미지로 전환
+- 미리보기 아래에 "이미지 저장" 버튼과 "닫기" 버튼
+
+3단계 — 저장:
+- "이미지 저장" 탭 → `UIImageWriteToSavedPhotosAlbum`으로 사진 앨범 저장
+- 저장 완료 시 "사진 앨범에 저장되었습니다" 텍스트로 버튼 영역 대체
+- "닫기" 버튼은 유지
+
+```
+[이미지 저장] 탭 (축하 카드 위)
+    ↓
+전체 화면 흰색 플래시 (0.3초) + ImageRenderer 캡처
+    ↓
+축하 카드 → 축소 + 그림자가 있는 미리보기 이미지로 전환
+흰색 배경 위 중앙에 캡처된 이미지 (~70% 크기)
+[이미지 저장] [닫기]
+    ↓ 이미지 저장 탭
+사진 앨범 저장 → "사진 앨범에 저장되었습니다" + [닫기]
+```
+
+**10-2. `Info.plist`**
+- `NSPhotoLibraryAddUsageDescription` 권한 추가 (사진 앨범 저장용) — 이미 있으면 스킵
