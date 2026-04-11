@@ -17,6 +17,11 @@ final class DayRoute {
 
     var distance: Double
 
+    /// 해당 일자 실제 걸음수
+    var actualSteps: Int = 0
+    /// 해당 일자 실제 이동거리 (km)
+    var actualDistanceWalked: Double = 0
+
     /// 경유지 좌표 목록 (JSON: [[lat, lon], ...])
     var waypointsData: Data?
 

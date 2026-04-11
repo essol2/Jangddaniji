@@ -115,8 +115,10 @@ final class DayDetailViewModel {
         return incomplete.count == 1 && incomplete.first?.id == dayRoute.id
     }
 
-    func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0) {
+    func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0, daySteps: Int = 0, dayDistanceKm: Double = 0) {
         dayRoute.status = .completed
+        dayRoute.actualSteps = daySteps
+        dayRoute.actualDistanceWalked = dayDistanceKm
 
         // Live Activity 종료
         LiveActivityManager.shared.endActivity(isCompleted: true)

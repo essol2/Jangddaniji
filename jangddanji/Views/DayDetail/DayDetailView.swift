@@ -159,7 +159,9 @@ private struct DayDetailContentView: View {
                         viewModel.markCompleted(
                             context: modelContext,
                             totalSteps: pedometer.totalSteps,
-                            totalDistanceKm: pedometer.totalDistanceKm
+                            totalDistanceKm: pedometer.totalDistanceKm,
+                            daySteps: pedometer.todaySteps,
+                            dayDistanceKm: pedometer.todayDistanceKm
                         )
                         if isLastSegment, let journeyID = dayRoute.journey?.id {
                             pendingJourneyCompleteID = journeyID

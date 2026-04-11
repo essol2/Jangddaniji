@@ -447,7 +447,9 @@ private struct DashboardContentView: View {
                                 viewModel.markCompleted(
                                     context: modelContext,
                                     totalSteps: pedometer.totalSteps,
-                                    totalDistanceKm: pedometer.totalDistanceKm
+                                    totalDistanceKm: pedometer.totalDistanceKm,
+                                    daySteps: pedometer.todaySteps,
+                                    dayDistanceKm: pedometer.todayDistanceKm
                                 )
                                 withAnimation { showCelebration = true }
                             } label: {

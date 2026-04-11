@@ -23,8 +23,10 @@ struct JourneyArchiveDetailView: View {
 
 private struct ArchiveDetailContentView: View {
     let journey: Journey
+    @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
     @State private var showPhotoViewer = false
+    @State private var showDeleteConfirm = false
     @State private var viewerPhotos: [Data] = []
     @State private var viewerIndex = 0
 
@@ -50,6 +52,19 @@ private struct ArchiveDetailContentView: View {
                                 withAnimation { showPhotoViewer = true }
                             }
                         }
+
+                        Button {
+                            showDeleteConfirm = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 14))
+                                Text("여정 삭제하기")
+                                    .font(.appRegular(size: 15))
+                            }
+                            .foregroundStyle(.red)
+                        }
+                        .padding(.top, 16)
                     }
                     .padding(16)
                     .padding(.bottom, 32)
@@ -57,6 +72,16 @@ private struct ArchiveDetailContentView: View {
             }
             .background(AppColors.background)
             .navigationBarHidden(true)
+            .alert("여정을 삭제하시겠습니까?", isPresented: $showDeleteConfirm) {
+                Button("삭제", role: .destructive) {
+                    modelContext.delete(journey)
+                    try? modelContext.save()
+                    router.pop()
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("'\(journey.title)'의 모든 기록이 영구적으로 삭제됩니다.")
+            }
 
             if showPhotoViewer {
                 ArchivePhotoViewerOverlay(
@@ -266,6 +291,48 @@ private struct ArchiveDayCard: View {
                     .padding(.horizontal, 14)
 
                 VStack(alignment: .leading, spacing: 12) {
+                    if dayRoute.actualSteps > 0 || dayRoute.actualDistanceWalked > 0 {
+                        Spacer().frame(height: 2)
+                        HStack(spacing: 10) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "shoeprints.fill")
+                                    .font(.appRegular(size: 14))
+                                    .foregroundStyle(AppColors.primaryBlueDark)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("걸음")
+                                        .font(.appRegular(size: 10))
+                                        .foregroundStyle(AppColors.textSecondary)
+                                    Text("\(dayRoute.actualSteps.formatted()) 걸음")
+                                        .font(.appBold(size: 14))
+                                        .foregroundStyle(AppColors.textPrimary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(AppColors.primaryBlue.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                            HStack(spacing: 6) {
+                                Image(systemName: "figure.walk")
+                                    .font(.appRegular(size: 14))
+                                    .foregroundStyle(AppColors.primaryBlueDark)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("이동")
+                                        .font(.appRegular(size: 10))
+                                        .foregroundStyle(AppColors.textSecondary)
+                                    Text(String(format: "%.1f km", dayRoute.actualDistanceWalked))
+                                        .font(.appBold(size: 14))
+                                        .foregroundStyle(AppColors.textPrimary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(AppColors.accentYellow.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
                     if !entry.sortedPhotos.isEmpty {
                         let photosData = entry.sortedPhotos.map(\.photoData)
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -294,24 +361,58 @@ private struct ArchiveDayCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    if entry.text.isEmpty && !entry.hasAnyPhoto {
-                        Text("기록이 없습니다")
-                            .font(.appRegular(size: 13))
-                            .foregroundStyle(AppColors.textSecondary.opacity(0.6))
-                    }
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 14)
-            } else if isExpanded && !hasJournal {
+            } else if isExpanded && !hasJournal && (dayRoute.actualSteps > 0 || dayRoute.actualDistanceWalked > 0) {
                 Divider()
                     .padding(.horizontal, 14)
 
-                Text("기록이 없습니다")
-                    .font(.appRegular(size: 13))
-                    .foregroundStyle(AppColors.textSecondary.opacity(0.6))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 14)
+                VStack(alignment: .leading, spacing: 12) {
+                    Spacer().frame(height: 2)
+                    HStack(spacing: 10) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "shoeprints.fill")
+                                .font(.appRegular(size: 14))
+                                .foregroundStyle(AppColors.primaryBlueDark)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("걸음")
+                                    .font(.appRegular(size: 10))
+                                    .foregroundStyle(AppColors.textSecondary)
+                                Text("\(dayRoute.actualSteps.formatted()) 걸음")
+                                    .font(.appBold(size: 14))
+                                    .foregroundStyle(AppColors.textPrimary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(AppColors.primaryBlue.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                        HStack(spacing: 6) {
+                            Image(systemName: "figure.walk")
+                                .font(.appRegular(size: 14))
+                                .foregroundStyle(AppColors.primaryBlueDark)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("이동")
+                                    .font(.appRegular(size: 10))
+                                    .foregroundStyle(AppColors.textSecondary)
+                                Text(String(format: "%.1f km", dayRoute.actualDistanceWalked))
+                                    .font(.appBold(size: 14))
+                                    .foregroundStyle(AppColors.textPrimary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(AppColors.accentYellow.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 14)
             }
         }
         .background(AppColors.cardBackground)

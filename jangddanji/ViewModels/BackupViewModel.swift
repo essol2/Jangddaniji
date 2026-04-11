@@ -161,6 +161,8 @@ final class BackupViewModel {
                         distance: dayRouteData.distance
                     )
                     dayRoute.statusRawValue = dayRouteData.statusRawValue
+                    dayRoute.actualSteps = dayRouteData.actualSteps
+                    dayRoute.actualDistanceWalked = dayRouteData.actualDistanceWalked
                     dayRoute.waypointsData = dayRouteData.waypointsData
                     dayRoute.journey = journey
                     context.insert(dayRoute)

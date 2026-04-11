@@ -72,9 +72,11 @@ final class DashboardViewModel {
         try? context.save()
     }
 
-    func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0) {
+    func markCompleted(context: ModelContext, totalSteps: Int = 0, totalDistanceKm: Double = 0, daySteps: Int = 0, dayDistanceKm: Double = 0) {
         guard let todayRoute else { return }
         todayRoute.status = .completed
+        todayRoute.actualSteps = daySteps
+        todayRoute.actualDistanceWalked = dayDistanceKm
 
         // Live Activity 종료
         LiveActivityManager.shared.endActivity(isCompleted: true)

@@ -67,6 +67,8 @@ struct RestoredDayRouteData {
     let endLatitude: Double
     let endLongitude: Double
     let distance: Double
+    let actualSteps: Int
+    let actualDistanceWalked: Double
     let waypointsData: Data?
     let statusRawValue: String
     var journalEntry: RestoredJournalEntryData?
@@ -291,6 +293,8 @@ final class CloudKitBackupService {
                     endLatitude: dayRouteRecord["endLatitude"] as? Double ?? 0,
                     endLongitude: dayRouteRecord["endLongitude"] as? Double ?? 0,
                     distance: dayRouteRecord["distance"] as? Double ?? 0,
+                    actualSteps: dayRouteRecord["actualSteps"] as? Int ?? 0,
+                    actualDistanceWalked: dayRouteRecord["actualDistanceWalked"] as? Double ?? 0,
                     waypointsData: (dayRouteRecord["waypointsData"] as? NSData).map { Data($0) },
                     statusRawValue: dayRouteRecord["statusRawValue"] as? String ?? "upcoming",
                     journalEntry: restoredEntry
@@ -446,6 +450,8 @@ final class CloudKitBackupService {
         record["endLatitude"] = dayRoute.endLatitude
         record["endLongitude"] = dayRoute.endLongitude
         record["distance"] = dayRoute.distance
+        record["actualSteps"] = dayRoute.actualSteps
+        record["actualDistanceWalked"] = dayRoute.actualDistanceWalked
         record["statusRawValue"] = dayRoute.statusRawValue
         record["waypointsData"] = dayRoute.waypointsData.map { NSData(data: $0) }
         record["journeyRef"] = CKRecord.Reference(recordID: journeyRecordID, action: .deleteSelf)
