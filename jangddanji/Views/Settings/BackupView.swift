@@ -3,52 +3,101 @@ import SwiftData
 
 struct BackupView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppRouter.self) private var router
     @State private var viewModel = BackupViewModel()
     @State private var showRestoreConfirm = false
     @State private var showDeleteConfirm = false
+    @State private var showExitConfirm = false
+
+    private var isWorking: Bool {
+        viewModel.isBackingUp || viewModel.isRestoring || viewModel.isDeleting
+    }
+
+    private var workingLabel: String {
+        if viewModel.isBackingUp { return "백업" }
+        if viewModel.isRestoring { return "복원" }
+        if viewModel.isDeleting { return "삭제" }
+        return ""
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // iCloud 상태
-                iCloudStatusCard
+        VStack(spacing: 0) {
+            // Header
+            VStack(alignment: .leading, spacing: 10) {
+                Button {
+                    if isWorking {
+                        showExitConfirm = true
+                    } else {
+                        router.pop()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.appRegular(size: 13))
+                        Text("돌아가기")
+                            .font(.appRegular(size: 14))
+                    }
+                    .foregroundStyle(AppColors.primaryBlueDark)
+                }
 
-                if viewModel.iCloudAvailable {
-                    // 백업 카드
-                    backupCard
+                Text("iCloud 백업")
+                    .font(.appBold(size: 22))
+                    .foregroundStyle(AppColors.textPrimary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
 
-                    // 복원 카드
-                    restoreCard
+            ScrollView {
+                VStack(spacing: 20) {
+                    // iCloud 상태
+                    iCloudStatusCard
 
-                    // 삭제 카드
-                    if viewModel.cloudJourneyCount > 0 {
-                        deleteCard
+                    if viewModel.iCloudAvailable {
+                        // 백업 카드
+                        backupCard
+
+                        // 복원 카드
+                        restoreCard
+
+                        // 삭제 카드
+                        if viewModel.cloudJourneyCount > 0 {
+                            deleteCard
+                        }
                     }
                 }
+                .padding(20)
             }
-            .padding(20)
         }
         .background(AppColors.background)
-        .navigationTitle("iCloud 백업")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarHidden(true)
         .task {
             await viewModel.checkBackupStatus()
         }
         .alert("iCloud 백업 삭제", isPresented: $showDeleteConfirm) {
             Button("삭제", role: .destructive) {
-                Task { await viewModel.deleteAllCloudData() }
+                viewModel.currentTask = Task { await viewModel.deleteAllCloudData() }
             }
             Button("취소", role: .cancel) {}
         } message: {
             Text("iCloud에 저장된 모든 백업 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.")
         }
-        .alert("데이터 복원", isPresented: $showRestoreConfirm) {
-            Button("복원", role: .destructive) {
-                Task { await viewModel.restoreAllData(context: modelContext) }
+        .alert("작업 진행 중", isPresented: $showExitConfirm) {
+            Button("나가기", role: .destructive) {
+                viewModel.cancelCurrentTask()
+                router.pop()
             }
             Button("취소", role: .cancel) {}
         } message: {
-            Text("iCloud에서 데이터를 복원하면 현재 기기의 모든 여정 데이터가 삭제되고 백업 데이터로 교체됩니다.")
+            Text("현재 \(workingLabel)이(가) 진행 중입니다.\n작업을 중단하고 나가시겠습니까?")
+        }
+        .alert("데이터 복원", isPresented: $showRestoreConfirm) {
+            Button("복원", role: .destructive) {
+                viewModel.currentTask = Task { await viewModel.restoreAllData(context: modelContext) }
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("현재 여정을 모두 백업 하셨나요?\n백업 없이 복원할 경우 현재 기기 데이터가 모두 지워질 수 있습니다.")
         }
     }
 
@@ -124,7 +173,7 @@ struct BackupView: View {
             }
 
             Button {
-                Task { await viewModel.backupAllData(context: modelContext) }
+                viewModel.currentTask = Task { await viewModel.backupAllData(context: modelContext) }
             } label: {
                 HStack {
                     if viewModel.isBackingUp {
@@ -142,7 +191,7 @@ struct BackupView: View {
                 .background(viewModel.isBackingUp ? AppColors.primaryBlue.opacity(0.6) : AppColors.primaryBlueDark)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(viewModel.isBackingUp || viewModel.isRestoring)
+            .disabled(isWorking)
 
             if let success = viewModel.successMessage, !viewModel.isBackingUp, !viewModel.isRestoring {
                 HStack(spacing: 6) {
@@ -183,7 +232,7 @@ struct BackupView: View {
                     .foregroundStyle(AppColors.textPrimary)
             }
 
-            Text("iCloud에 저장된 백업에서 모든 여정 데이터를 복원합니다. 현재 기기의 데이터는 삭제됩니다.")
+            Text("iCloud에 저장된 백업에서 모든 여정 데이터를 복원합니다.")
                 .font(.appRegular(size: 13))
                 .foregroundStyle(AppColors.textSecondary)
 
@@ -210,7 +259,7 @@ struct BackupView: View {
                 .background(AppColors.primaryBlue.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(viewModel.isBackingUp || viewModel.isRestoring || viewModel.cloudJourneyCount == 0)
+            .disabled(isWorking || viewModel.cloudJourneyCount == 0)
         }
         .padding(16)
         .background(AppColors.cardBackground)
@@ -258,7 +307,7 @@ struct BackupView: View {
                 .background(.red.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(viewModel.isDeleting || viewModel.isBackingUp || viewModel.isRestoring)
+            .disabled(isWorking)
         }
         .padding(16)
         .background(AppColors.cardBackground)

@@ -18,7 +18,18 @@ final class BackupViewModel {
     var isDeleting = false
     var iCloudAvailable = true
 
+    var currentTask: Task<Void, Never>?
     private let backupService = CloudKitBackupService()
+
+    func cancelCurrentTask() {
+        currentTask?.cancel()
+        currentTask = nil
+        isBackingUp = false
+        isRestoring = false
+        isDeleting = false
+        progress = 0
+        progressMessage = ""
+    }
 
     // MARK: - Check Status
 
@@ -104,6 +115,8 @@ final class BackupViewModel {
                 }
             }
 
+            guard !Task.isCancelled else { return }
+
             // 기존 로컬 데이터 삭제
             progressMessage = "로컬 데이터 정리 중..."
             let existingJourneys = try context.fetch(FetchDescriptor<Journey>())
@@ -111,6 +124,8 @@ final class BackupViewModel {
                 context.delete(journey)
             }
             try context.save()
+
+            guard !Task.isCancelled else { return }
 
             // 복원 데이터 삽입
             progressMessage = "데이터 저장 중..."
