@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 // [AD-DISABLED] import GoogleMobileAds
 // [AD-DISABLED] import AppTrackingTransparency
 
@@ -12,6 +13,7 @@ struct jangddanjiApp: App {
     private let sharedModelContainer: ModelContainer?
     @State private var databaseError: String?
     @State private var router = AppRouter()
+    private let notificationDelegate = DiaryNotificationDelegate()
 
     init() {
         let schema = Schema([
@@ -43,6 +45,8 @@ struct jangddanjiApp: App {
                 .modelContainer(container)
                 .task {
                     migratePhotoDataIfNeeded()
+                    UNUserNotificationCenter.current().delegate = notificationDelegate
+                    notificationDelegate.router = router
                 }
                 // [AD-DISABLED] .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 //     requestTrackingPermission()
@@ -102,6 +106,40 @@ struct jangddanjiApp: App {
             JourneyCompleteView(journeyID: id)
         case .backup:
             BackupView()
+        case .diaryRecording(let dayRouteID, let hour):
+            DiaryRecordingView(dayRouteID: dayRouteID, hour: hour)
+        case .diaryPlayer(let videoPath):
+            DiaryVideoPlayerView(videoPath: videoPath)
         }
+    }
+}
+
+// MARK: - UNUserNotificationCenterDelegate
+
+final class DiaryNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    var router: AppRouter?
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        if let idString = userInfo["dayRouteID"] as? String,
+           let dayRouteID = UUID(uuidString: idString) {
+            let hour = Calendar.current.component(.hour, from: Date())
+            DispatchQueue.main.async {
+                self.router?.navigateTo(.diaryRecording(dayRouteID: dayRouteID, hour: hour))
+            }
+        }
+        completionHandler()
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
 }

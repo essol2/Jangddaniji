@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import AVKit
 
 struct DayDetailView: View {
     let dayRouteID: UUID
@@ -36,12 +37,17 @@ private struct DayDetailContentView: View {
     @State private var selectedPhotoIndex = 0
     @State private var isEditingPhotos = false
     @State private var draggingPhotoIndex: Int?
+    @State private var isExportingVideo = false
+    @State private var notificationStartHour: Int
+    @State private var notificationEndHour: Int
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
     init(dayRoute: DayRoute) {
         self.dayRoute = dayRoute
         _viewModel = State(initialValue: DayDetailViewModel(dayRoute: dayRoute))
+        _notificationStartHour = State(initialValue: dayRoute.diaryNotificationStartHour)
+        _notificationEndHour = State(initialValue: dayRoute.diaryNotificationEndHour)
     }
 
     var body: some View {
@@ -55,6 +61,10 @@ private struct DayDetailContentView: View {
                     routeInfoCard
                     journalPhotoSection
                     journalTextSection
+                    diarySection
+                    if !viewModel.isCompleted {
+                        diaryNotificationSettingSection
+                    }
                 }
                 .padding(16)
             }
@@ -166,6 +176,8 @@ private struct DayDetailContentView: View {
                         if isLastSegment, let journeyID = dayRoute.journey?.id {
                             pendingJourneyCompleteID = journeyID
                         }
+                        DiaryNotificationService.shared.cancelNotifications(for: dayRoute.id)
+                        triggerVideoExportIfNeeded()
                         withAnimation { showCelebration = true }
                     } label: {
                         HStack(spacing: 4) {
@@ -448,6 +460,170 @@ private struct DayDetailContentView: View {
             let sorted = entry.sortedPhotos
             if index < sorted.count {
                 viewModel.deletePhoto(sorted[index], context: modelContext)
+            }
+        }
+    }
+
+    // MARK: - Diary section
+
+    private var diarySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("오늘의 영상")
+                .font(.appBold(size: 15))
+                .foregroundStyle(AppColors.textPrimary)
+
+            if dayRoute.diaryClipPaths.isEmpty {
+                Text("아직 촬영된 클립이 없습니다")
+                    .font(.appRegular(size: 13))
+                    .foregroundStyle(AppColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 16)
+            } else {
+                // 클립 썸네일 가로 스크롤
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(dayRoute.diaryClipPaths, id: \.self) { path in
+                            let url = URL(fileURLWithPath: path)
+                            let hour = Int(url.deletingPathExtension().lastPathComponent) ?? 0
+                            VStack(spacing: 4) {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.black)
+                                    .frame(width: 72, height: 96)
+                                    .overlay {
+                                        Image(systemName: "video.fill")
+                                            .foregroundStyle(.white.opacity(0.6))
+                                    }
+                                Text(String(format: "%02d:00", hour))
+                                    .font(.appRegular(size: 11))
+                                    .foregroundStyle(AppColors.textSecondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 영상 보러가기 / 생성 중
+            if isExportingVideo {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("영상 생성 중...")
+                        .font(.appRegular(size: 13))
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+            } else if let videoPath = dayRoute.diaryVideoPath {
+                Button {
+                    router.navigateTo(.diaryPlayer(videoPath: videoPath))
+                } label: {
+                    Label("영상 보러가기", systemImage: "play.circle.fill")
+                        .font(.appBold(size: 14))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
+                        .background(AppColors.primaryBlueDark)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+        }
+        .padding(16)
+        .background(AppColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+    }
+
+    // MARK: - Diary notification setting section
+
+    private var diaryNotificationSettingSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("영상 촬영 알림")
+                .font(.appBold(size: 15))
+                .foregroundStyle(AppColors.textPrimary)
+
+            HStack {
+                Text("시작")
+                    .font(.appRegular(size: 14))
+                    .foregroundStyle(AppColors.textSecondary)
+                    .frame(width: 36, alignment: .leading)
+                Picker("시작", selection: $notificationStartHour) {
+                    ForEach(0...23, id: \.self) { hour in
+                        Text(hourLabel(hour)).tag(hour)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: notificationStartHour) { _, newValue in
+                    if newValue >= notificationEndHour {
+                        notificationEndHour = min(newValue + 1, 23)
+                    }
+                    saveNotificationSettings()
+                }
+            }
+
+            HStack {
+                Text("종료")
+                    .font(.appRegular(size: 14))
+                    .foregroundStyle(AppColors.textSecondary)
+                    .frame(width: 36, alignment: .leading)
+                Picker("종료", selection: $notificationEndHour) {
+                    ForEach(0...23, id: \.self) { hour in
+                        Text(hourLabel(hour)).tag(hour)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: notificationEndHour) { _, newValue in
+                    if newValue <= notificationStartHour {
+                        notificationStartHour = max(newValue - 1, 0)
+                    }
+                    saveNotificationSettings()
+                }
+            }
+
+            Text("매 정시마다 알림을 보내드려요")
+                .font(.appRegular(size: 12))
+                .foregroundStyle(AppColors.textSecondary.opacity(0.7))
+        }
+        .padding(16)
+        .background(AppColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+        .padding(.bottom, 16)
+    }
+
+    private func hourLabel(_ hour: Int) -> String {
+        if hour == 0 { return "오전 12시" }
+        if hour < 12 { return "오전 \(hour)시" }
+        if hour == 12 { return "오후 12시" }
+        return "오후 \(hour - 12)시"
+    }
+
+    private func saveNotificationSettings() {
+        dayRoute.diaryNotificationStartHour = notificationStartHour
+        dayRoute.diaryNotificationEndHour = notificationEndHour
+        try? modelContext.save()
+        DiaryNotificationService.shared.scheduleHourlyNotifications(
+            for: dayRoute.id,
+            startHour: notificationStartHour,
+            endHour: notificationEndHour
+        )
+    }
+
+    private func triggerVideoExportIfNeeded() {
+        let paths = dayRoute.diaryClipPaths
+        guard !paths.isEmpty else { return }
+        isExportingVideo = true
+        let id = dayRoute.id
+        Task {
+            do {
+                let videoPath = try await DiaryVideoService.shared.exportDiaryVideo(
+                    clipPaths: paths,
+                    dayRouteID: id
+                )
+                await MainActor.run {
+                    dayRoute.diaryVideoPath = videoPath
+                    try? modelContext.save()
+                    isExportingVideo = false
+                }
+            } catch {
+                await MainActor.run { isExportingVideo = false }
             }
         }
     }

@@ -307,3 +307,267 @@ struct FeedbackWebView: UIViewControllerRepresentable {
 |------|---------|
 | `Views/Entry/EntryView.swift` | 수정 |
 | `Views/Feedback/FeedbackWebView.swift` | 신규 |
+
+---
+
+## Phase 12 — 여정 다이어리 영상
+
+### 개요
+
+매 정시마다 로컬 알림을 발송하고, 사용자가 알림을 탭하면 카메라 화면이 열린다. 촬영 버튼을 누르면 2초간 자동 녹화되며 클립이 저장된다. 하루 여정 완료 시 저장된 클립들을 하나의 영상으로 합산하고, `DayDetailView`에서 영상을 확인·다운로드할 수 있다.
+
+---
+
+### 12-1. 데이터 모델 변경 (`DayRoute.swift`)
+
+기존 `waypointsData: Data?` 패턴과 동일하게 JSON 인코딩 방식으로 추가.
+
+```swift
+/// 촬영된 클립 파일 경로 목록 (JSON: ["path1", "path2", ...])
+var diaryClipsData: Data?
+
+/// 합산 완료된 최종 영상 파일 경로
+var diaryVideoPath: String?
+
+/// 다이어리 알림 시작 시각 (기본값 8 = 오전 8시)
+var diaryNotificationStartHour: Int = 8
+
+/// 다이어리 알림 종료 시각 (기본값 23 = 오후 11시)
+var diaryNotificationEndHour: Int = 23
+```
+
+헬퍼 프로퍼티:
+```swift
+var diaryClipPaths: [String] {
+    get {
+        guard let data = diaryClipsData else { return [] }
+        return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+    }
+    set {
+        diaryClipsData = try? JSONEncoder().encode(newValue)
+    }
+}
+```
+
+**SwiftData 마이그레이션:**
+- `VersionedSchema` V1 (기존) → V2 (신규 필드 추가)
+- `MigrationPlan`에서 `willMigrate` 단계 처리
+- 신규 필드는 옵셔널/기본값이므로 경량 마이그레이션(lightweight migration) 적용 가능
+
+---
+
+### 12-2. `DiaryNotificationService.swift` (신규)
+
+**역할:** 여정 시작 시 매 정시 알림 등록, 완료 시 해제
+
+```swift
+// 알림 등록 (DayDetailView 진입 시 또는 시간 설정 변경 시 호출)
+func scheduleHourlyNotifications(
+    for dayRouteID: UUID,
+    startHour: Int,   // DayRoute.diaryNotificationStartHour
+    endHour: Int      // DayRoute.diaryNotificationEndHour
+)
+
+// 알림 해제 (완료 버튼 탭 시 또는 시간 재설정 시 호출)
+func cancelNotifications(for dayRouteID: UUID)
+```
+
+- `UNUserNotificationCenter`로 `startHour ~ endHour` 범위 내 정시마다 알림 등록
+- 현재 시각보다 이미 지난 정시는 건너뜀
+- 알림 `userInfo`에 `dayRouteID` 포함 → 탭 시 해당 DayRoute로 이동
+- 알림 identifier 패턴: `"diary-\(dayRouteID.uuidString)-\(hour)"`
+- 시간 설정 변경 시: 기존 알림 전체 해제 후 새 범위로 재등록
+
+---
+
+### 12-3. `DiaryRecordingService.swift` (신규)
+
+**역할:** AVCaptureSession 관리 + 2초 클립 저장
+
+```swift
+// 세션 시작 (카메라 프리뷰용)
+func startSession()
+
+// 녹화 시작 → 2초 후 자동 완료
+func startRecording(hour: Int, dayRouteID: UUID) async throws -> String  // 클립 파일 경로 반환
+
+// 세션 종료
+func stopSession()
+```
+
+- `AVCaptureSession` + `AVCaptureMovieFileOutput`
+- 저장 경로: `Documents/DiaryClips/{dayRouteID}/{hour}.mov`
+- 2초 후 `AVCaptureMovieFileOutput.stopRecording()` 자동 호출 (`Task.sleep`)
+- `AVCaptureDevice.default(.builtInWideAngleCamera)` 후면 카메라 사용
+
+---
+
+### 12-4. `DiaryVideoService.swift` (신규)
+
+**역할:** 클립에 시각 오버레이 합성 + 전체 클립 합산 내보내기
+
+```swift
+// 클립 합산 + 오버레이 내보내기 (비동기, 진행률 반환)
+func exportDiaryVideo(
+    clipPaths: [String],
+    dayRouteID: UUID
+) async throws -> String  // 최종 영상 파일 경로 반환
+```
+
+**합산 과정:**
+1. `AVMutableComposition`에 클립들을 시간순으로 추가
+2. 각 클립 구간에 `CATextLayer`(시각 텍스트)를 `AVVideoCompositionCoreAnimationTool`로 합성
+   - 텍스트: 파일명에서 hour 추출 (ex. `11.mov` → `"11:00"`)
+   - 폰트: 시스템 Bold, size 72, 흰색, 중앙 정렬
+   - 배경: 반투명 검정 레이어 (가독성)
+3. `AVAssetExportSession`으로 MP4 내보내기
+4. 저장 경로: `Documents/DiaryVideos/{dayRouteID}/diary.mp4`
+
+---
+
+### 12-5. `DiaryRecordingView.swift` (신규)
+
+**역할:** 카메라 프리뷰 + 촬영 버튼 UX
+
+```
+┌─────────────────────┐
+│                     │
+│   카메라 프리뷰      │
+│   (전체화면)        │
+│                     │
+│  ← 닫기   11:00 촬영│  ← 상단 오버레이
+│                     │
+│                     │
+│       [ ● ]         │  ← 촬영 버튼
+│    탭하여 촬영       │
+└─────────────────────┘
+```
+
+**상태:**
+- `@State private var isRecording: Bool`
+- `@State private var remainingTime: Double = 2.0`
+- `@State private var showCompletionToast: Bool`
+
+**촬영 버튼 탭 동작:**
+1. `isRecording = true` → 버튼 비활성화 + 원형 타이머 표시
+2. `DiaryRecordingService.startRecording()` 호출
+3. 2초 후 완료 → 클립 경로를 `DayRoute.diaryClipPaths`에 append + SwiftData save
+4. `showCompletionToast = true` → "11시 클립이 저장됐습니다" 토스트 1.5초 표시
+5. 토스트 완료 후 `router.pop()`
+
+**카메라 프리뷰:**
+- `AVCaptureVideoPreviewLayer`를 `UIViewRepresentable`로 래핑한 `CameraPreviewView` 사용
+
+---
+
+### 12-6. `DiaryVideoPlayerView.swift` (신규)
+
+**역할:** 합산 영상 재생 + 다운로드
+
+```
+┌─────────────────────┐
+│  ← 닫기             │
+│                     │
+│   VideoPlayer       │
+│   (AVPlayer)        │
+│                     │
+└─────────────────────┘
+      [사진 앨범에 저장]
+```
+
+- `VideoPlayer(player:)` (SwiftUI AVKit)
+- 다운로드 버튼 → `PHPhotoLibrary.shared().performChanges` 로 사진 앨범 저장
+- 저장 완료 시 "저장됐습니다" 토스트
+
+---
+
+### 12-7. `AppRouter.swift` / `jangddanjiApp.swift` 수정
+
+`AppDestination`에 케이스 추가:
+```swift
+case diaryRecording(dayRouteID: UUID)
+case diaryPlayer(dayRouteID: UUID)
+```
+
+`destinationView(for:)` switch 추가:
+```swift
+case .diaryRecording(let id):
+    DiaryRecordingView(dayRouteID: id)
+case .diaryPlayer(let id):
+    DiaryVideoPlayerView(dayRouteID: id)
+```
+
+**알림 탭 처리 (`jangddanjiApp.swift`):**
+- `UNUserNotificationCenterDelegate` 채택
+- `userNotificationCenter(_:didReceive:)` 에서 `userInfo["dayRouteID"]` 파싱
+- `router.navigateTo(.diaryRecording(dayRouteID:))` 호출
+
+---
+
+### 12-8. `DayDetailView.swift` 수정
+
+`journalTextSection` 아래에 `diarySection`, `diaryNotificationSettingSection` 순서로 추가:
+
+#### diarySection — 영상 카드
+
+```
+┌─────────────────────────────┐
+│ 오늘의 영상                  │
+│ ┌───┐ ┌───┐ ┌───┐           │  ← 클립 썸네일 가로 스크롤
+│ │11 │ │13 │ │15 │           │    클립 0개면 "아직 촬영된 클립이 없습니다" 안내
+│ └───┘ └───┘ └───┘           │
+│                             │
+│ ▶ 영상 보러가기              │  ← diaryVideoPath != nil 일 때
+│ ◌ 영상 생성 중...  [진행률]  │  ← 생성 중일 때
+└─────────────────────────────┘
+```
+
+#### diaryNotificationSettingSection — 알림 시간 설정 카드
+
+```
+┌─────────────────────────────┐
+│ 영상 촬영 알림               │
+│                             │
+│ 시작  [오전 8시  ▾]          │  ← Picker (0~23시)
+│ 종료  [오후 11시 ▾]          │  ← Picker (0~23시, startHour보다 커야 함)
+│                             │
+│ 매 정시마다 알림을 보내드려요  │  ← 안내 문구 (textSecondary, small)
+└─────────────────────────────┘
+```
+
+- Picker 변경 시: `dayRoute.diaryNotificationStartHour` / `diaryNotificationEndHour` 즉시 저장
+- 이어서 `DiaryNotificationService.cancelNotifications` → `scheduleHourlyNotifications` 재등록
+- 여정 완료(`isCompleted`) 상태이면 섹션 전체 미표시
+
+**완료 버튼 탭 시 추가 동작:**
+- `DiaryNotificationService.cancelNotifications(for: dayRoute.id)` 호출
+- `diaryClipPaths.count > 0` 이면 `DiaryVideoService.exportDiaryVideo()` 비동기 호출
+- 완료되면 `dayRoute.diaryVideoPath` 업데이트
+
+---
+
+### 12-9. `Info.plist` 권한 추가
+
+| 키 | 용도 |
+|----|------|
+| `NSCameraUsageDescription` | 여정 클립 촬영 |
+| `NSMicrophoneUsageDescription` | 영상 오디오 녹음 |
+
+(`NSPhotoLibraryAddUsageDescription`은 Phase 10에서 추가 예정)
+
+---
+
+### 변경/신규 파일 목록
+
+| 파일 | 신규/수정 |
+|------|---------|
+| `Models/DayRoute.swift` | 수정 |
+| `Navigation/AppRouter.swift` | 수정 |
+| `jangddanjiApp.swift` | 수정 |
+| `Views/DayDetail/DayDetailView.swift` | 수정 |
+| `Info.plist` | 수정 |
+| `Services/DiaryNotificationService.swift` | 신규 |
+| `Services/DiaryRecordingService.swift` | 신규 |
+| `Services/DiaryVideoService.swift` | 신규 |
+| `Views/Diary/DiaryRecordingView.swift` | 신규 |
+| `Views/Diary/DiaryVideoPlayerView.swift` | 신규 |

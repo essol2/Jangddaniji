@@ -10,6 +10,8 @@ enum AppDestination: Hashable {
     case archiveDetail(journeyID: UUID)
     case journeyComplete(journeyID: UUID)
     case backup
+    case diaryRecording(dayRouteID: UUID, hour: Int)
+    case diaryPlayer(videoPath: String)
 }
 
 @Observable

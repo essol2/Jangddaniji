@@ -25,6 +25,18 @@ final class DayRoute {
     /// 경유지 좌표 목록 (JSON: [[lat, lon], ...])
     var waypointsData: Data?
 
+    /// 촬영된 클립 파일 경로 목록 (JSON: ["path1", "path2", ...])
+    var diaryClipsData: Data?
+
+    /// 합산 완료된 최종 영상 파일 경로
+    var diaryVideoPath: String?
+
+    /// 다이어리 알림 시작 시각 (기본값 8 = 오전 8시)
+    var diaryNotificationStartHour: Int = 8
+
+    /// 다이어리 알림 종료 시각 (기본값 23 = 오후 11시)
+    var diaryNotificationEndHour: Int = 23
+
     var statusRawValue: String
     var status: DayRouteStatus {
         get { DayRouteStatus(rawValue: statusRawValue) ?? .upcoming }
@@ -60,6 +72,17 @@ final class DayRoute {
         self.distance = distance
         self.statusRawValue = DayRouteStatus.upcoming.rawValue
         self.waypointsData = try? JSONEncoder().encode(waypoints)
+    }
+
+    /// 촬영된 클립 경로 배열 (헬퍼)
+    var diaryClipPaths: [String] {
+        get {
+            guard let data = diaryClipsData else { return [] }
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        set {
+            diaryClipsData = try? JSONEncoder().encode(newValue)
+        }
     }
 
     /// 경유지 좌표 배열 (디코딩)
