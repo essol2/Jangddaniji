@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import SafariServices
 
 struct EntryView: View {
     @Environment(\.modelContext) private var modelContext
@@ -8,6 +9,8 @@ struct EntryView: View {
     private var activeJourneys: [Journey]
     @Query(filter: #Predicate<Journey> { $0.statusRawValue == "completed" })
     private var completedJourneys: [Journey]
+
+    @State private var isFeedbackPresented = false
 
     // [AD-DISABLED] private var interstitialAd = InterstitialAdManager.shared
 
@@ -132,6 +135,17 @@ struct EntryView: View {
                 }
                 .padding(.horizontal, 40)
 
+                // Feedback
+                Button {
+                    isFeedbackPresented = true
+                } label: {
+                    Text("개발자에게 의견 보내기")
+                        .font(.appRegular(size: 15))
+                        .foregroundStyle(.white.opacity(0.75))
+                        .underline()
+                }
+                .padding(.top, 20)
+
                 Spacer()
                     .frame(height: 40)
 
@@ -143,5 +157,8 @@ struct EntryView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $isFeedbackPresented) {
+            FeedbackWebView()
+        }
     }
 }

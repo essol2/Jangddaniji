@@ -231,3 +231,79 @@ CelebrationOverlayView 등장 (컨페티 + 축하 카드)
 
 **10-2. `Info.plist`**
 - `NSPhotoLibraryAddUsageDescription` 권한 추가 (사진 앨범 저장용) — 이미 있으면 스킵
+
+---
+
+## Phase 11 — 개발자에게 의견 보내기
+
+### 개요
+
+`EntryView` 하단에 작은 밑줄 텍스트 버튼을 추가하고, 누르면 Google Form을 앱 내 WebView(SFSafariViewController)로 띄운다.
+별도 서버/API 없이 Google Form 응답이 연결된 Google Sheets에 자동 기록된다.
+
+- Google Form URL: `https://forms.gle/bHJhScdEYwkaYfc67`
+
+---
+
+### 11-1. `EntryView.swift` 수정
+
+버튼 위치: iCloud 백업 버튼 아래 `Spacer(height: 40)` 구간, copyright 텍스트 바로 위
+
+```
+[iCloud 백업 버튼]
+Spacer (height: 40)
+개발자에게 의견 보내기   ← 신규 (밑줄, 작은 텍스트)
+© 2026 Jangddanji...
+```
+
+디자인:
+- `Text("개발자에게 의견 보내기")`
+- `.font(.appRegular(size: 13))`
+- `.foregroundStyle(.white.opacity(0.75))`
+- `.underline()`
+- `.padding(.bottom, 8)`
+
+탭 시: `isFeedbackPresented = true` → `FeedbackWebView` sheet 표시
+
+상태값 추가:
+```swift
+@State private var isFeedbackPresented = false
+```
+
+`.sheet` 연결:
+```swift
+.sheet(isPresented: $isFeedbackPresented) {
+    FeedbackWebView()
+}
+```
+
+---
+
+### 11-2. `Views/Feedback/FeedbackWebView.swift` (신규)
+
+`SFSafariViewController`를 SwiftUI sheet로 표시하는 `UIViewControllerRepresentable` 래퍼.
+
+- URL: `https://forms.gle/bHJhScdEYwkaYfc67`
+- `SFSafariViewController` 사용 → JS 완전 지원, 쿠키 처리, Done 버튼으로 sheet 닫기 내장
+- `AppRouter` / `AppDestination` 변경 불필요 (sheet 방식)
+
+```swift
+struct FeedbackWebView: UIViewControllerRepresentable {
+    let url = URL(string: "https://forms.gle/bHJhScdEYwkaYfc67")!
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        SFSafariViewController(url: url)
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+```
+
+---
+
+### 변경 파일 목록
+
+| 파일 | 신규/수정 |
+|------|---------|
+| `Views/Entry/EntryView.swift` | 수정 |
+| `Views/Feedback/FeedbackWebView.swift` | 신규 |
