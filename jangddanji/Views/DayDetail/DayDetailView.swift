@@ -40,6 +40,12 @@ private struct DayDetailContentView: View {
     @State private var isExportingVideo = false
     @State private var notificationStartHour: Int
     @State private var notificationEndHour: Int
+    @State private var selectedMediaTab: MediaTab = .photo
+
+    private enum MediaTab: String, CaseIterable {
+        case photo = "사진"
+        case video = "영상"
+    }
     @Environment(\.modelContext) private var modelContext
     @Environment(AppRouter.self) private var router
 
@@ -59,9 +65,8 @@ private struct DayDetailContentView: View {
                 VStack(spacing: 16) {
                     mapSection
                     routeInfoCard
-                    journalPhotoSection
+                    mediaSection
                     journalTextSection
-                    diarySection
                     if !viewModel.isCompleted {
                         diaryNotificationSettingSection
                     }
@@ -314,21 +319,37 @@ private struct DayDetailContentView: View {
             .clipShape(Capsule())
     }
 
-    // MARK: - Photo section
+    private func deletePhoto(at index: Int) {
+        guard index < journalPhotos.count else { return }
+        journalPhotos.remove(at: index)
+        if let entry = dayRoute.journalEntry {
+            let sorted = entry.sortedPhotos
+            if index < sorted.count {
+                viewModel.deletePhoto(sorted[index], context: modelContext)
+            }
+        }
+    }
 
-    private var journalPhotoSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    // MARK: - Media section (사진 + 영상 통합)
+
+    private var mediaSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // 탭 헤더
             HStack {
-                Text("오늘의 사진")
-                    .font(.appBold(size: 15))
-                    .foregroundStyle(AppColors.textPrimary)
-                if !journalPhotos.isEmpty {
+                Picker("미디어", selection: $selectedMediaTab) {
+                    ForEach(MediaTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if selectedMediaTab == .photo, !journalPhotos.isEmpty {
                     Text("\(journalPhotos.count)장")
                         .font(.appRegular(size: 13))
                         .foregroundStyle(AppColors.textSecondary)
                 }
-                Spacer()
-                if journalPhotos.count > 1 {
+
+                if selectedMediaTab == .photo, journalPhotos.count > 1 {
                     Button {
                         withAnimation { isEditingPhotos.toggle() }
                     } label: {
@@ -343,9 +364,25 @@ private struct DayDetailContentView: View {
                 }
             }
 
+            // 탭 콘텐츠
+            if selectedMediaTab == .photo {
+                photoContent
+            } else {
+                videoContent
+            }
+        }
+        .padding(16)
+        .background(AppColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+    }
+
+    // MARK: - Photo content
+
+    private var photoContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
             if !journalPhotos.isEmpty {
                 if isEditingPhotos {
-                    // 순서 변경 모드: 길게 눌러 드래그
                     VStack(spacing: 8) {
                         ForEach(Array(journalPhotos.enumerated()), id: \.offset) { index, photoData in
                             if let uiImage = UIImage(data: photoData) {
@@ -353,18 +390,15 @@ private struct DayDetailContentView: View {
                                     Image(systemName: "line.3.horizontal")
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundStyle(AppColors.textSecondary.opacity(0.5))
-
                                     Image(uiImage: uiImage)
                                         .resizable()
                                         .scaledToFill()
                                         .frame(width: 64, height: 64)
                                         .clipped()
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
-
                                     Text("\(index + 1)번째 사진")
                                         .font(.appRegular(size: 13))
                                         .foregroundStyle(AppColors.textPrimary)
-
                                     Spacer()
                                 }
                                 .padding(8)
@@ -388,7 +422,6 @@ private struct DayDetailContentView: View {
                         }
                     }
                 } else {
-                    // 일반 모드: 2열 그리드
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 8),
                         GridItem(.flexible(), spacing: 8)
@@ -407,7 +440,6 @@ private struct DayDetailContentView: View {
                                             selectedPhotoIndex = index
                                             withAnimation { showPhotoViewer = true }
                                         }
-
                                     Button {
                                         deletePhoto(at: index)
                                     } label: {
@@ -424,7 +456,6 @@ private struct DayDetailContentView: View {
                 }
             }
 
-            // 사진 추가 버튼
             if !isEditingPhotos {
                 PhotosPicker(
                     selection: $selectedPhotos,
@@ -447,31 +478,12 @@ private struct DayDetailContentView: View {
                 }
             }
         }
-        .padding(16)
-        .background(AppColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
     }
 
-    private func deletePhoto(at index: Int) {
-        guard index < journalPhotos.count else { return }
-        journalPhotos.remove(at: index)
-        if let entry = dayRoute.journalEntry {
-            let sorted = entry.sortedPhotos
-            if index < sorted.count {
-                viewModel.deletePhoto(sorted[index], context: modelContext)
-            }
-        }
-    }
+    // MARK: - Video content
 
-    // MARK: - Diary section
-
-    private var diarySection: some View {
+    private var videoContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("오늘의 영상")
-                .font(.appBold(size: 15))
-                .foregroundStyle(AppColors.textPrimary)
-
             if dayRoute.diaryClipPaths.isEmpty {
                 Text("아직 촬영된 클립이 없습니다")
                     .font(.appRegular(size: 13))
@@ -479,7 +491,6 @@ private struct DayDetailContentView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 16)
             } else {
-                // 클립 썸네일 가로 스크롤
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(dayRoute.diaryClipPaths, id: \.self) { path in
@@ -502,11 +513,9 @@ private struct DayDetailContentView: View {
                 }
             }
 
-            // 영상 보러가기 / 생성 중
             if isExportingVideo {
                 HStack(spacing: 8) {
-                    ProgressView()
-                        .scaleEffect(0.8)
+                    ProgressView().scaleEffect(0.8)
                     Text("영상 생성 중...")
                         .font(.appRegular(size: 13))
                         .foregroundStyle(AppColors.textSecondary)
@@ -525,25 +534,17 @@ private struct DayDetailContentView: View {
                 }
             }
         }
-        .padding(16)
-        .background(AppColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
     }
 
     // MARK: - Diary notification setting section
 
     private var diaryNotificationSettingSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("영상 촬영 알림")
                 .font(.appBold(size: 15))
                 .foregroundStyle(AppColors.textPrimary)
 
-            HStack {
-                Text("시작")
-                    .font(.appRegular(size: 14))
-                    .foregroundStyle(AppColors.textSecondary)
-                    .frame(width: 36, alignment: .leading)
+            HStack(spacing: 6) {
                 Picker("시작", selection: $notificationStartHour) {
                     ForEach(0...23, id: \.self) { hour in
                         Text(hourLabel(hour)).tag(hour)
@@ -556,13 +557,11 @@ private struct DayDetailContentView: View {
                     }
                     saveNotificationSettings()
                 }
-            }
 
-            HStack {
-                Text("종료")
-                    .font(.appRegular(size: 14))
+                Image(systemName: "arrow.right")
+                    .font(.appRegular(size: 12))
                     .foregroundStyle(AppColors.textSecondary)
-                    .frame(width: 36, alignment: .leading)
+
                 Picker("종료", selection: $notificationEndHour) {
                     ForEach(0...23, id: \.self) { hour in
                         Text(hourLabel(hour)).tag(hour)
@@ -575,6 +574,8 @@ private struct DayDetailContentView: View {
                     }
                     saveNotificationSettings()
                 }
+
+                Spacer()
             }
 
             Text("매 정시마다 알림을 보내드려요")
